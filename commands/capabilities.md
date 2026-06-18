@@ -2,18 +2,18 @@
 
 > **Version**: 2.10.0 | **Updated**: 2026-06-02
 
-This document defines capabilities, not tools. The skill discovers available tools inside the execution VM and selects the best candidate for each capability.
+This document defines capabilities, not tools. The skill discovers available tools inside the Kali Linux VM or equivalent execution VM and selects the best candidate for each capability.
 
 ## Capability Discovery
 
-Before using any capability, discover available tools inside the VM:
+Before using any capability, discover available tools inside the VM and write the result into the active task directory:
 
 ```bash
-# Run inside the execution VM
-./scripts/discover-capabilities.sh capabilities.json
+# Run inside the Kali VM or equivalent execution VM
+./scripts/discover-capabilities.sh <task_dir>/capabilities.json
 ```
 
-Output: `capabilities.json` with available tools per capability.
+Output: `<task_dir>/capabilities.json` with available tools per capability.
 
 If no tool is available for a capability:
 - Record the limitation in `task.md`

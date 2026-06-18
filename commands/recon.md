@@ -3,14 +3,14 @@
 > **Version**: 2.8.1 | **Updated**: 2026-06-01
 >
 > **Capability-first**: This guide is organized by capabilities, not specific tools.
-> Tools are discovered inside the execution VM at runtime.
+> Tools are discovered inside the Kali Linux VM or equivalent execution VM at runtime.
 
 ## Prerequisite
 
-Run capability discovery inside the VM before any recon:
+Run capability discovery inside the VM before any recon and write the result into the active task directory:
 
 ```bash
-./scripts/discover-capabilities.sh capabilities.json
+./scripts/discover-capabilities.sh <task_dir>/capabilities.json
 ```
 
 Read the output to understand available tools per capability.

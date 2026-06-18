@@ -6,7 +6,7 @@ Task execution generates the following structured files for case retention, know
 - `findings.json`
 - `evidence-index.json`
 
-**Output Location**: Task results go to a user-specified directory, the existing task directory when resuming, `$PENTEST_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`. Do not write results into the skill package source files by default.
+**Output Location**: Task results go to a user-specified directory, the existing task directory when resuming, `$AUTHORIZED_APPSEC_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`. Do not write results into the skill package source files by default.
 
 Directory structure:
 

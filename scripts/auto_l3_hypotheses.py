@@ -203,7 +203,7 @@ def write_json(path: Path, data):
 
 
 def default_l3_root() -> Path:
-    env_root = os.environ.get("PENTEST_L3_ROOT")
+    env_root = os.environ.get("AUTHORIZED_APPSEC_L3_ROOT")
     if env_root:
         return Path(env_root).expanduser()
     return Path.home() / "authorized-appsec" / "l3"
@@ -438,7 +438,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Generate L3-backed hypothesis queue from current task fingerprints")
     parser.add_argument("task_dir", help="Task directory")
-    parser.add_argument("--l3-root", default=None, help="L3 root (default: $PENTEST_L3_ROOT or ~/authorized-appsec/l3)")
+    parser.add_argument("--l3-root", default=None, help="L3 root (default: $AUTHORIZED_APPSEC_L3_ROOT or ~/authorized-appsec/l3)")
     parser.add_argument("--min-score", type=int, default=3, help="Minimum signal score to trigger L3 hypotheses")
     parser.add_argument("--limit", type=int, default=2, help="L3 entries per category")
     parser.add_argument("--output", default=None, help="Output JSON path (default: <task_dir>/l3-hypotheses.json)")

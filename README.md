@@ -7,6 +7,10 @@ CLI-friendly workflow for authorized Web, API, and application security assessme
 **Entry point**: `SKILL.md` (version and authoritative rules live there).
 **State management**: `memory-protocol.md`.
 
+## Runtime Assumption
+
+Run active testing from a Kali Linux VM or an equivalent isolated security-testing VM where this skill directory is available. Capability discovery and network tools must run inside that VM, not from the host workstation. Keep task outputs outside the skill package, using a user-specified output directory, `$AUTHORIZED_APPSEC_RESULTS_ROOT`, or `~/authorized-appsec/results/`.
+
 ## Core Design
 
 - **Evidence-driven**: every confirmed finding backed by current-task raw evidence. No severity from path shape, L3 recall, or historical cases alone.
@@ -46,7 +50,7 @@ Optional local archives may exist outside this directory, but they are not requi
 
 ## Default Output
 
-Use a user-specified directory when provided. When resuming, continue in the existing task directory. Otherwise create task output in `$PENTEST_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`:
+Use a user-specified directory when provided. When resuming, continue in the existing task directory. Otherwise create task output in `$AUTHORIZED_APPSEC_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`:
 
 ```text
 results/
@@ -74,10 +78,10 @@ Do not write task output inside this skill package. Do not use legacy result roo
 
 ## Scripts
 
-Run capability discovery inside the VM before testing:
+Run capability discovery inside the Kali VM before testing and write the result into the current task directory:
 
 ```bash
-bash scripts/discover-capabilities.sh capabilities.json
+bash scripts/discover-capabilities.sh <task_dir>/capabilities.json
 ```
 
 Run structure validation from this directory:

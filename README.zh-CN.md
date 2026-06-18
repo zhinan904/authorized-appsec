@@ -7,6 +7,10 @@
 **入口文件**：`SKILL.md`（版本号和权威规则在此）。
 **状态管理**：`memory-protocol.md`。
 
+## 运行环境假设
+
+主动测试应在 Kali Linux 虚拟机或等价的隔离安全测试虚拟机中执行。工具发现和网络测试命令应在该 VM 内运行，而不是在宿主机上运行。任务输出不要写入 skill 包目录，应写入用户指定目录、`$AUTHORIZED_APPSEC_RESULTS_ROOT` 或 `~/authorized-appsec/results/`。
+
 ## 核心设计
 
 - **证据驱动**：每个确认的发现都有当前任务的原始证据支撑。不单凭路径形状、L3 召回或历史案例定级。
@@ -48,6 +52,9 @@ authorized-appsec/
 ```bash
 # 初始化一个测试任务
 python3 scripts/init_task.py https://example.com --type url
+
+# 在 Kali VM 内发现可用工具，并写入当前任务目录
+bash scripts/discover-capabilities.sh <task_dir>/capabilities.json
 
 # 生成结构化输出和报告
 python3 scripts/ensure_structured_outputs.py <task_dir>

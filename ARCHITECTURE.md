@@ -532,7 +532,7 @@ flowchart TB
     end
 
     subgraph OutputRoot["Output Root"]
-        RESULTS["$PENTEST_RESULTS_ROOT<br/>or ~/authorized-appsec/results/"]
+        RESULTS["$AUTHORIZED_APPSEC_RESULTS_ROOT<br/>or ~/authorized-appsec/results/"]
         PTDIR["PT-{ID}/"]
         BATCHDIR["BATCH-{ID}/"]
     end

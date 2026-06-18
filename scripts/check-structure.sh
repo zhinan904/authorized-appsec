@@ -285,7 +285,7 @@ echo ""
 echo "[7/7] Checking template content consistency..."
 
 # Check output path convention consistency
-if grep -q "PENTEST_RESULTS_ROOT" templates/structured-output-requirements.md 2>/dev/null && \
+if grep -q "AUTHORIZED_APPSEC_RESULTS_ROOT" templates/structured-output-requirements.md 2>/dev/null && \
      grep -q "~/authorized-appsec/results" templates/structured-output-requirements.md 2>/dev/null; then
   echo -e "  ${GREEN}✓${NC} Output path convention consistent with SKILL.md"
 else

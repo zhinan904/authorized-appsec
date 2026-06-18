@@ -41,7 +41,7 @@ Stop immediately if authorization is contradicted, service impact appears, scope
 
 ## Results Location
 
-Write results to a user-specified directory, the existing task directory when resuming, `$PENTEST_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`. `SKILL_ROOT` is the directory containing this `SKILL.md` file and must be treated as read-only bundled resources. Do not write new tasks inside the skill package or to legacy result roots unless the user explicitly names that path. Read `memory-protocol.md` for task directory structure and state management rules.
+Active testing runs inside the Kali Linux VM or an equivalent isolated execution VM. Capability discovery, network probing, and tool execution happen in that VM, not on the host workstation. Write results to a user-specified directory, the existing task directory when resuming, `$AUTHORIZED_APPSEC_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`. `SKILL_ROOT` is the directory containing this `SKILL.md` file and must be treated as read-only bundled resources. Do not write new tasks inside the skill package or to legacy result roots unless the user explicitly names that path. Read `memory-protocol.md` for task directory structure and state management rules.
 
 ## Workflow Phases
 

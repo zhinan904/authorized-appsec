@@ -18,7 +18,7 @@ Choose the task output root in this order:
 
 1. User-specified directory.
 2. Existing task directory when resuming.
-3. `$PENTEST_RESULTS_ROOT`, when set.
+3. `$AUTHORIZED_APPSEC_RESULTS_ROOT`, when set.
 4. `~/authorized-appsec/results/`.
 
 Never create new task results inside the skill package by default. Never use legacy result roots as implicit defaults. If an existing task contains a legacy absolute path in `task.md`, normalize follow-up writes to the actual task directory unless the user explicitly asks to continue in that legacy root.
@@ -442,7 +442,7 @@ python3 scripts/generate_batch_report.py <batch_dir>
 bash scripts/task-control.sh terminate-batch <batch_dir> --target T-003
 
 # Capability discovery
-bash scripts/discover-capabilities.sh capabilities.json
+bash scripts/discover-capabilities.sh <task_dir>/capabilities.json
 
 # Structure validation
 bash scripts/check-structure.sh

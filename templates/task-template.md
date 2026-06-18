@@ -1,10 +1,10 @@
 # Task Meta
 
-- task_id: PT-YYYYMMDD-001
+- task_id: PT-{YYYYMMDD}-{SEQ}-example-com
 - target: https://example.com
 - target_type: url
 - results_root: {RESULTS_ROOT}
-- task_dir: {RESULTS_ROOT}/PT-YYYYMMDD-001-example-com
+- task_dir: {RESULTS_ROOT}/PT-{YYYYMMDD}-{SEQ}-example-com
 - status: in_progress
 - current_phase: phase_0
 - loop_depth: 0

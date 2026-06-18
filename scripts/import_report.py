@@ -25,7 +25,7 @@ def skill_root() -> Path:
 
 
 def default_results_root() -> Path:
-    env_root = os.environ.get("PENTEST_RESULTS_ROOT")
+    env_root = os.environ.get("AUTHORIZED_APPSEC_RESULTS_ROOT")
     if env_root:
         return Path(env_root).expanduser()
     return Path.home() / "authorized-appsec" / "results"
@@ -537,7 +537,7 @@ def main():
     parser = argparse.ArgumentParser(description="Import a legacy vulnerability report into a PT task directory")
     parser.add_argument("report_file", help="Legacy report file (.md, .html, .docx, .doc)")
     parser.add_argument("--target", default="", help="Target family/URL for the imported report")
-    parser.add_argument("--output-dir", default=None, help="Output root directory (default: $PENTEST_RESULTS_ROOT or ~/authorized-appsec/results/)")
+    parser.add_argument("--output-dir", default=None, help="Output root directory (default: $AUTHORIZED_APPSEC_RESULTS_ROOT or ~/authorized-appsec/results/)")
     parser.add_argument("--default-status", choices=["confirmed", "suspicious"], default="confirmed", help="Default status for parsed findings with PoC")
     parser.add_argument("--confirm-without-poc", action="store_true", help="Keep findings confirmed even when the report has no explicit PoC")
     parser.add_argument("--no-generate-report", action="store_true", help="Only import and structure; do not generate report.md")

@@ -23,7 +23,7 @@ def write_json(path: Path, data):
 
 
 def default_results_root() -> Path:
-    env_root = os.environ.get("PENTEST_RESULTS_ROOT")
+    env_root = os.environ.get("AUTHORIZED_APPSEC_RESULTS_ROOT")
     if env_root:
         return Path(env_root).expanduser()
     return Path.home() / "authorized-appsec" / "results"
@@ -60,7 +60,7 @@ def main():
                         choices=["url", "domain", "ip", "ip_range", "artifact", "mini_program"],
                         help="Target type")
     parser.add_argument("--output-dir", default=None,
-                        help="Output root directory (default: $PENTEST_RESULTS_ROOT or ~/authorized-appsec/results/)")
+                        help="Output root directory (default: $AUTHORIZED_APPSEC_RESULTS_ROOT or ~/authorized-appsec/results/)")
     args = parser.parse_args()
 
     if args.output_dir:

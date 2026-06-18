@@ -737,7 +737,7 @@ Choose batch output root in this order:
 
 1. User-specified directory
 2. Existing batch directory when resuming
-3. `$PENTEST_RESULTS_ROOT`, when set
+3. `$AUTHORIZED_APPSEC_RESULTS_ROOT`, when set
 4. `~/authorized-appsec/results/`
 
 Use these names:
