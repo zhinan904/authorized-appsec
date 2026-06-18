@@ -38,14 +38,14 @@
 |-----------|--------|------|-------|
 | T-001 | https://example.com | URL | Primary web application |
 | T-002 | https://api.example.com | URL | API backend |
-| T-003 | 192.168.1.0/24 | IP range | Internal network (requires VPN) |
+| T-003 | 192.0.2.0/24 | IP range | Example network range (requires VPN) |
 
 ### 2.2 Out-of-Scope (Excluded)
 
 | Target | Reason |
 |--------|--------|
 | staging.example.com | Not included in authorization |
-| 192.168.2.0/24 | Production database network, excluded by client |
+| 198.51.100.0/24 | Example database network, excluded by client |
 | Third-party services | CDN, payment processor, email provider |
 
 ### 2.3 Scope Boundaries

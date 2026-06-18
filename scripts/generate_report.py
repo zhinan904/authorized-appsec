@@ -54,7 +54,7 @@ def pretty_status(value: str) -> str:
 def report_title(summary):
     target = summary.get("target", "")
     host = urlparse(target).netloc or target
-    return f"Penetration Test Report - {host or 'unknown-target'}"
+    return f"Authorized AppSec Assessment Report - {host or 'unknown-target'}"
 
 
 def short_target(summary):
@@ -433,7 +433,7 @@ def run_ensure_structured(task_dir: Path) -> tuple[bool, str]:
 
 def main():
     import argparse as ap
-    parser = ap.ArgumentParser(description="Generate penetration testing report")
+    parser = ap.ArgumentParser(description="Generate authorized AppSec assessment report")
     parser.add_argument("task_dir", help="Task directory")
     parser.add_argument("--export-l3", default=None, help="Export to L3 root")
     parser.add_argument("--format", default="markdown", choices=["markdown", "sarif", "defectdojo"],
@@ -599,8 +599,8 @@ def generate_sarif(summary: dict, findings: list, evidence: list) -> dict:
             "tool": {
                 "driver": {
                     "name": "authorized-appsec-skill",
-                    "version": "2.10.0",
-                    "informationUri": "https://github.com/anthropics/claude-code",
+                    "version": "2.21.0",
+                    "informationUri": "https://github.com/zhinan904/authorized-appsec",
                     "rules": rules,
                 }
             },
@@ -644,7 +644,7 @@ def generate_defectdojo(summary: dict, findings: list, evidence: list) -> dict:
         "test": {
             "title": f"Authorized AppSec - {summary.get('task_id', 'unknown')}",
             "target_id": target,
-            "test_type": "Pen Test",
+            "test_type": "Application Security Assessment",
         },
         "engagement": {
             "name": summary.get("task_id", "unknown"),

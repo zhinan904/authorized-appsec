@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify admin interface exposure and authentication bypass vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify admin interface exposure and authentication bypass vulnerability risk characteristics.
 >
 > - All testing is **limited to proving existence** of admin interfaces, no unauthorized access
 > - Default credential testing references `default-credentials.md` and is limited to 3-5 attempts
@@ -116,8 +116,8 @@ headers=(
   "X-Remote-Addr: 127.0.0.1"
   "X-Originating-IP: 127.0.0.1"
   "X-Forwarded-Host: localhost"
-  "X-Forwarded-For: 10.0.0.1"
-  "X-Forwarded-For: 192.168.1.1"
+  "X-Forwarded-For: 198.51.100.10"
+  "X-Forwarded-For: 192.0.2.10"
 )
 
 for header in "${headers[@]}"; do

@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify HTTP method misconfiguration vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify HTTP method misconfiguration vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual data modification prohibited
 > - HTTP method testing is for understanding attack surface only, **no unauthorized resource modification**
@@ -40,7 +40,7 @@ HTTP methods vulnerability validation core objective is **proving existence**:
 **⚠️ Dangerous method testing gate (PUT/DELETE/PATCH/MOVE/COPY)**:
 
 - **Web applications**:Not tested by defaultthese five methods. Even if OPTIONS shows allowed, do not actively send create/update/delete requests. Only when**explicit user authorization to test create/update/delete operations**then, test only on test endpoints with test data, Clean up afterwards. 
-- **OSS / object storage** (Alibaba OSS, AWS S3, etc.):PUT **testable** - write test objects to isolated bucket (for example `pentest-{random}-test.txt`), low-destructive, cleanup-able operation. Delete test objects after testing. DELETE Still requires authorization (avoid deleting bucket objects). 
+- **OSS / object storage** (Alibaba OSS, AWS S3, etc.):PUT **testable** - write test objects to isolated bucket (for example `appsec-test-{random}.txt`), low-destructive, cleanup-able operation. Delete test objects after testing. DELETE Still requires authorization (avoid deleting bucket objects).
 - **Passive discovery**:if the OPTIONS response shows these methods are allowed, Can be recorded as finding, assign Low/Medium and mark "only observed method allowed, not actively tested". 
 
 ---

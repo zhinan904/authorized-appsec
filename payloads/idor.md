@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify IDOR (Insecure Direct Object Reference) / BOLA (Broken Object Level Authorization) vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify IDOR (Insecure Direct Object Reference) / BOLA (Broken Object Level Authorization) vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual unauthorized access is prohibited
 > - IDOR payloads are for understanding attack surface only, **no access to other users' private data**

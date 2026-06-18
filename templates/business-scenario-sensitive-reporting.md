@@ -10,7 +10,7 @@ Use this template when the target handles whistleblower, informant, hotline, inc
 | Reporter Identity | Treat reporter identity, phone state, openid/userId linkage, case status, attachment state, and report content as sensitive. |
 | Single Account | With one account, validate trust-boundary behavior only. Do not claim cross-user read/delete unless paired-account or vendor evidence proves it. |
 | State Change | Do not create, update, submit, delete, or send SMS unless the user explicitly authorizes that exact operation. |
-| Test Data | Numeric IDs, sequential IDs, `1`, `2`, `admin`, `test`, or plausible production IDs are not safe test data. Use synthetic UUID-like values containing `pentest`. |
+| Test Data | Numeric IDs, sequential IDs, `1`, `2`, `admin`, `test`, or plausible production IDs are not safe test data. Use synthetic UUID-like values containing `appsec-test`. |
 | Evidence | Store only redacted reporter identifiers and sanitized PoCs. Do not store real PII outside `sessions/`. |
 
 ## Static-First Flow

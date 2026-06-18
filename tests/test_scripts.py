@@ -34,7 +34,7 @@ class TestInitTask:
         assert slugify("https://example.com") == "example-com"
 
     def test_slugify_ip(self):
-        assert slugify("192.168.1.1") == "192-168-1-1"
+        assert slugify("192.0.2.1") == "192-0-2-1"
 
     def test_slugify_strip_protocol(self):
         assert slugify("http://test.local") == "test-local"

@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify API command injection vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify API command injection vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual execution of malicious commands is prohibited
 > - Command injection payloads are for understanding attack surface only, **no actual exploitation**

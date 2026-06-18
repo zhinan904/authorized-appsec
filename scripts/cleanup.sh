@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cleanup.sh
-# Clean up test artifacts and sanitize evidence after penetration testing.
+# Clean up test artifacts and sanitize evidence after authorized AppSec assessment.
 #
 # Usage:
 #   bash scripts/cleanup.sh <task_dir> [--dry-run] [--batch]

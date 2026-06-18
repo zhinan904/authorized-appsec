@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify SOAP/WSDL web service vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify SOAP/WSDL web service vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual service exploitation prohibited
 > - SOAP injection and WSDL enumeration are for understanding attack surface only, **no unauthorized data access**

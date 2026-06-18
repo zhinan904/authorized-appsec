@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify SQL injection vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify SQL injection vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual sensitive data reading prohibited
 > - SQL injection payloads are for understanding attack surface only, **no database control obtained**

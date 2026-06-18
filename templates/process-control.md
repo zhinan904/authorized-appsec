@@ -1,6 +1,6 @@
 # Process Control Protocol
 
-> **Purpose**: Force terminate sub-task execution during batch or single-task penetration testing.
+> **Purpose**: Force terminate sub-task execution during batch or single-task authorized AppSec assessment.
 
 ---
 

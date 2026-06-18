@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual malicious operations are prohibited
 > - Payloads are for understanding attack surface only, **do not enable harm**

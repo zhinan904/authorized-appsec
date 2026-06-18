@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify error handling and information disclosure vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify error handling and information disclosure vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual sensitive data extraction prohibited
 > - Error provocation payloads are for understanding attack surface only, **no system destabilization**

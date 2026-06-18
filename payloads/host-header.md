@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify Host header injection vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify Host header injection vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual phishing/cache poisoning is prohibited
 > - Host header payloads are for understanding attack surface only, **no malicious redirects**

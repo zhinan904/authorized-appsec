@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify API authentication/authorization vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify API authentication/authorization vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual unauthorized modification/deletion of data is prohibited
 > - Authentication bypass payloads are for understanding attack surface only, **not for obtaining persistent access**

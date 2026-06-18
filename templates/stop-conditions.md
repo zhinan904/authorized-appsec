@@ -1,6 +1,6 @@
 # Stop Conditions
 
-> **Purpose**: Unified stop conditions for batch and single-task penetration testing.
+> **Purpose**: Unified stop conditions for batch and single-task authorized AppSec assessment.
 
 ---
 

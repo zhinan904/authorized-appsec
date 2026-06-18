@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify session management vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify session management vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual session hijacking prohibited
 > - Session testing is for understanding attack surface only, **no unauthorized account access**

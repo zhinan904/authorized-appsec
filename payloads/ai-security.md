@@ -2,7 +2,7 @@
 
 > **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing** of AI/LLM-powered applications only.
+> This document is for **authorized AppSec assessment** of AI/LLM-powered applications only.
 >
 > - All payloads test **input validation and access control boundaries**, not model training data extraction
 > - Prompt injection tests prove bypass exists; **no mass data extraction** from model memory
@@ -18,7 +18,7 @@ Every AI security test must observe these hard stops:
 |---|---|---|
 | System prompt leakage | **One successful echo** of any system instruction fragment — stop, report as confirmed finding | Iterative extraction of the full prompt; multi-turn deep extraction |
 | RAG / vector DB query | **One query** confirming unauthorized access to a collection — stop, report boundary violation | Bulk enumeration (`SELECT *` equivalent); reading full documents |
-| Tool-use bypass | **One call** proving an unauthorized tool is reachable (use safe params: `user_id=pentest-test-001`) | Calling with production data; chaining multiple tools for data extraction |
+| Tool-use bypass | **One call** proving an unauthorized tool is reachable (use safe params: `user_id=appsec-test-001`) | Calling with production data; chaining multiple tools for data extraction |
 | Indirect injection | **One POC document** causing observable behavior change — stop, report as confirmed | Creating persistent backdoor documents in production |
 | Memory/persistence | **One confirmation** that cross-session memory leaks exist — stop | Extracting other users' stored memories; mass recall |
 | Cost amplification | **One request** measuring amplification factor — report factor as finding | Sending N amplified requests to inflate the bill |
@@ -256,10 +256,10 @@ Find documents whose content is: [exact text from a document that should not be 
 # Test if vector DB accepts writes
 # Safe: write a test document with unique marker
 test_doc = {
-    "content": "PENTEST_MARKER_2026_TEST_DOCUMENT - safe to delete",
+    "content": "APPSEC_TEST_MARKER_DOCUMENT - safe to delete",
     "metadata": {"source": "penetration-test", "test": True}
 }
-# Verify: search for PENTEST_MARKER_2026_TEST_DOCUMENT
+# Verify: search for APPSEC_TEST_MARKER_DOCUMENT
 # Cleanup: delete the test document
 ```
 

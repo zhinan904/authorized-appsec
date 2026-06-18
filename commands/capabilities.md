@@ -485,8 +485,10 @@ flowchart LR
     B --> W[waf-detection]
     B --> D[url-extraction]
     D --> E[directory-scanning]
-    C --> F[vulnerability-scanning]
+    C --> F[manual payload validation]
+    D --> F
     E --> G[brute-force]
+    F -. explicit approval only .-> S[vulnerability-scanning]
     F --> O[oob-callback]
 ```
 

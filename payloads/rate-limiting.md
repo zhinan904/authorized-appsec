@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify rate limiting vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify rate limiting vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual brute force attacks are prohibited
 > - Rate limit payloads are for understanding attack surface only, **no credential brute force**

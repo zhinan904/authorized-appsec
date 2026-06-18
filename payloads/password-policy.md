@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify password policy and account lockout vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify password policy and account lockout vulnerability risk characteristics.
 >
 > - All testing is **limited to proving policy weaknesses**, no unauthorized account access
 > - Account lockout testing uses your own test accounts, **no lockout of other users' accounts**

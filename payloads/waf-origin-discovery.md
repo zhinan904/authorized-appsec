@@ -31,7 +31,7 @@
 
 ---
 
-## Source: Penetration testing practice, Bypass firewalls, CDN fingerprinting research
+## Source: Application security assessment practice, Bypass firewalls, CDN fingerprinting research
 
 ## Validation Objectives
 
@@ -270,7 +270,7 @@ Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
 
 # General Chinese WAF bypass
 # 1. Exploit Chinese fullwidth characters
-１９２．１６８．１．１ -> 192.168.1.1
+１９２．０．２．１ -> 192.0.2.1
 
 # 2. Exploit GBK/GB2312 encoding differential (wide byte)
 %df%27 -> [wide-byte]' (consumes backslash)

@@ -1,6 +1,6 @@
 # E-Commerce Business Scenario Test Template
 
-> **Scenario**: Online shopping platform penetration testing workflow
+> **Scenario**: Online shopping platform authorized AppSec assessment workflow
 > **Target**: Order creation → Payment → Delivery workflow
 
 ---

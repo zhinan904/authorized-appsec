@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify OAuth/OIDC vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify OAuth/OIDC vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual token theft is prohibited
 > - OAuth payloads are for understanding attack surface only, **no credential capture**

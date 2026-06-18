@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify DOM-based XSS vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify DOM-based XSS vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual JavaScript execution is prohibited
 > - DOM XSS payloads are for understanding attack surface only, **no cookie theft or session hijacking**

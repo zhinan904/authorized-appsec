@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify prototype pollution vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify prototype pollution vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual property pollution is prohibited
 > - Prototype pollution payloads are for understanding attack surface only, **no application behavior modification**

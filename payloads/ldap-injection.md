@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify LDAP injection vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify LDAP injection vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual credential extraction is prohibited
 > - LDAP payloads are for understanding attack surface only, **no directory data harvesting**

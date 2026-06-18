@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify backup and source code exposure vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify backup and source code exposure vulnerability risk characteristics.
 >
 > - All testing is **limited to proving existence** of exposed files, no content exploitation
 > - Backup file discovery is for understanding exposure only, **no credential or config extraction**

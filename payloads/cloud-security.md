@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify cloud storage and metadata exposure vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify cloud storage and metadata exposure vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual credential exploitation prohibited
 > - Cloud metadata testing requires **explicit user authorization** before probing

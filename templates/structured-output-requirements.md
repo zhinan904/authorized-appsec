@@ -86,7 +86,7 @@ For details see `README.md` → Default Output and `SKILL.md` → Results Locati
       "fact_summary": "GET parameter id has SQL injection, single quote triggers error echo",
       "boundary": "Manual verification completed, no database read operation executed",
       "evidence_refs": ["E-001", "E-002"],
-      "recommended_next_action": "Recommend using sqlmap for deep exploitation with user confirmation",
+      "recommended_next_action": "Request explicit approval before any scanner-assisted validation beyond the minimal safe PoC",
       "knowledge_candidate": true,
       "memory_candidate": true,
       "distillation_candidate": true,

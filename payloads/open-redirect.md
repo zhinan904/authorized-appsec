@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify open redirect vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify open redirect vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual phishing attacks are prohibited
 > - Open redirect payloads are for understanding attack surface only, **no phishing pages created**

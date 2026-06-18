@@ -2,7 +2,7 @@
 
 > **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing** only.
+> This document is for **authorized AppSec assessment** only.
 >
 > - Validates race condition vulnerability via HTTP/2 single-packet technique
 > - Proves timing-sensitive vulnerability exists; **no real fraud or financial exploitation**
@@ -118,7 +118,7 @@ async def single_packet_attack(url, headers, payload, count=20):
 asyncio.run(single_packet_attack(
     url="https://{target}/api/apply-coupon",
     headers={"Authorization": "Bearer TOKEN"},
-    payload={"coupon_code": "PENTEST_TEST_COUPON"},
+    payload={"coupon_code": "APPSEC_TEST_COUPON"},
     count=20
 ))
 ```
@@ -134,7 +134,7 @@ asyncio.run(single_packet_attack(
 # Single-packet: all requests arrive before coupon state is marked "used"
 
 # Safe test: use a test coupon that the operator created
-payload = {"coupon": "PENTEST_TEST_ONLY", "order_id": "test-order-001"}
+payload = {"coupon": "APPSEC_TEST_ONLY", "order_id": "test-order-001"}
 
 # Expected (secure): only first request succeeds, rest get "already used"
 # Vulnerable: multiple requests succeed -> coupon applied N times
@@ -174,8 +174,8 @@ payload = {"amount": 100, "currency": "TEST"}
 # Single-packet: send redemption from account A and account B at once
 
 # Safe test: operator-created gift card
-payload_a = {"code": "PENTEST-GC-001", "account": "test_a"}
-payload_b = {"code": "PENTEST-GC-001", "account": "test_b"}
+payload_a = {"code": "APPSEC-GC-001", "account": "test_a"}
+payload_b = {"code": "APPSEC-GC-001", "account": "test_b"}
 ```
 
 ---

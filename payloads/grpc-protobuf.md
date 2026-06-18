@@ -2,7 +2,7 @@
 
 > **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing** of gRPC-based services only.
+> This document is for **authorized AppSec assessment** of gRPC-based services only.
 >
 > - Payloads test input validation and access control on gRPC endpoints
 > - Server reflection is used for service enumeration; **no unauthorized data access**

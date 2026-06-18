@@ -2,7 +2,7 @@
 
 > **Version**: 2.10.0 | **Updated**: 2026-06-02
 
-This document defines severity classification rules for penetration testing findings. The classification prioritizes practical exploitability and attack impact over theoretical CVSS scores.
+This document defines severity classification rules for authorized AppSec assessment findings. The classification prioritizes practical exploitability and attack impact over theoretical CVSS scores.
 
 ---
 

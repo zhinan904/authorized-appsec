@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify client-side secret exposure and business logic disclosure vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify client-side secret exposure and business logic disclosure vulnerability risk characteristics.
 >
 > - All testing is **limited to discovery**, actual use of discovered secrets is prohibited
 > - Client-side secret scanning is for understanding exposure only, **no credential exploitation**

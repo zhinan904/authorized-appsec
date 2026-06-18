@@ -54,7 +54,7 @@ def next_seq(results_root: Path) -> int:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="Initialize a single PT task directory")
+    parser = argparse.ArgumentParser(description="Initialize a single authorized-appsec task directory")
     parser.add_argument("target", help="Target URL, domain, IP, or IP range")
     parser.add_argument("--type", dest="target_type", default="url",
                         choices=["url", "domain", "ip", "ip_range", "artifact", "mini_program"],

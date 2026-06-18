@@ -317,7 +317,7 @@ Do not export tasks with zero confirmed distillation candidates into L3 knowledg
 
 ## Batch Protocol
 
-For multi-target penetration testing, use batch-mode workflow with unified authorization boundary and isolated task execution.
+For multi-target authorized AppSec assessment, use batch-mode workflow with unified authorization boundary and isolated task execution.
 
 ### Batch vs Single Task
 

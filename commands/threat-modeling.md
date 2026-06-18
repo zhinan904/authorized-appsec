@@ -2,7 +2,7 @@
 
 > **Version**: 2.8.1 | **Updated**: 2026-06-01
 >
-> **Purpose**: Systematic threat modeling methodology for web application penetration testing. Map fingerprint data to attack hypotheses and prioritize testing.
+> **Purpose**: Systematic threat modeling methodology for authorized web application security assessment. Map fingerprint data to attack hypotheses and prioritize testing.
 
 ---
 

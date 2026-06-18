@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify XXE vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify XXE vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, DoS attacks prohibited
 > - XXE payloads are for understanding attack surface only, **no SSRF exploitation of internal network**

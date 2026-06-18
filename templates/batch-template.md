@@ -1,6 +1,6 @@
 # Batch Task Template
 
-> **Purpose**: Multi-target penetration testing workflow with unified authorization boundary and isolated task execution.
+> **Purpose**: Multi-target authorized AppSec assessment workflow with unified authorization boundary and isolated task execution.
 
 ---
 
@@ -66,7 +66,7 @@ flowchart TD
 
 | Field | Description | Example |
 |-------|-------------|---------|
-| `targets` | Target list or IP ranges | `["example.com", "api.example.com", "192.168.1.0/24"]` |
+| `targets` | Target list or IP ranges | `["example.com", "api.example.com", "192.0.2.0/24"]` |
 | `scope` | Allowed domains/IPs/paths/accounts | `["example.com/*", "*.example.com"]` |
 | `excluded` | Excluded targets or paths | `["staging.example.com", "/admin"]` |
 | `intensity` | Testing intensity level | `passive`, `gentle`, `standard` |
@@ -325,7 +325,7 @@ This mode optimizes for:
 ### When Discovery Needed
 
 - Domain list without explicit targets
-- IP range (e.g., `192.168.1.0/24`)
+- IP range (e.g., `192.0.2.0/24`)
 - Large subdomain enumeration result
 - User requests candidate filtering
 
@@ -414,7 +414,7 @@ Create `index.md` with selection summary:
 | api.example.com | selected | Primary API |
 | www.example.com | selected | Main website |
 | staging.example.com | skipped_out_of_scope | Exclusion rule |
-| 192.168.1.1:22 | skipped_non_web | SSH service |
+| 192.0.2.1:22 | skipped_non_web | SSH service |
 
 ## Statistics
 
@@ -666,7 +666,7 @@ flowchart LR
 | Target | Status | Reason |
 |--------|--------|--------|
 | staging.example.com | skipped_out_of_scope | Exclusion rule |
-| 192.168.1.1:22 | skipped_non_web | SSH service |
+| 192.0.2.1:22 | skipped_non_web | SSH service |
 
 ---
 

@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify default credential vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify default credential vulnerability risk characteristics.
 >
 > - All testing is **limited to proving existence of default credentials**, no further exploitation
 > - Maximum 3-5 login attempts per default credential set, **no brute force**

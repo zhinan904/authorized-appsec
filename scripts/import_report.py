@@ -534,7 +534,7 @@ def import_report(source_path: Path, target: str = "", output_dir: Path | None =
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Import a legacy vulnerability report into a PT task directory")
+    parser = argparse.ArgumentParser(description="Import a legacy vulnerability report into an authorized-appsec task directory")
     parser.add_argument("report_file", help="Legacy report file (.md, .html, .docx, .doc)")
     parser.add_argument("--target", default="", help="Target family/URL for the imported report")
     parser.add_argument("--output-dir", default=None, help="Output root directory (default: $AUTHORIZED_APPSEC_RESULTS_ROOT or ~/authorized-appsec/results/)")

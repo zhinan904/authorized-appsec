@@ -21,7 +21,7 @@ If no session is supplied, skip this branch entirely and test only the unauthent
 | ③ Horizontal privilege escalation (IDOR/BOLA) | **2 test accounts at the same privilege level** | **Degrade**: run single-account "inferred" check only and explicitly mark "horizontal IDOR: not covered (needs second account)" in findings/report. Do not claim it is tested. |
 | ④ Session/token lifecycle | 1 session | Always runnable |
 
-**Account rules**: test accounts only. Synthetic UUID-like values containing `pentest`. Sequential/numeric IDs and real-user identifiers are not test data — see SKILL.md Action Policy.
+**Account rules**: test accounts only. Synthetic UUID-like values containing `appsec-test`. Sequential/numeric IDs and real-user identifiers are not test data — see SKILL.md Action Policy.
 
 ---
 

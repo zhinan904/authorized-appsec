@@ -71,7 +71,7 @@ Four faces, in dependency order:
 | ③ Horizontal privilege escalation (IDOR/BOLA) | user-A session accessing user-B resources | **2 accounts** — with only 1 account, run degraded "inferred" check and explicitly mark "not covered, needs second account"; never report as confirmed |
 | ④ Session/token lifecycle | JWT flaws, token non-expiry, session fixation, MFA bypass, OAuth/password-reset weaknesses | 1 |
 
-**Account rules**: test accounts only; synthetic UUID-like values containing `pentest`; sequential/numeric/real-user IDs are not test data.
+**Account rules**: test accounts only; synthetic UUID-like values containing `appsec-test`; sequential/numeric/real-user IDs are not test data.
 
 Faces ②③④ run against the endpoint list produced by ①, in parallel with the existing unauthenticated Phase 3 validation. Read `commands/authenticated-testing.md` for the full method, session handling, and coverage rules. A face is only "done" when completed or explicitly marked not-covered-with-reason — degraded/skipped faces must appear in the report's non-findings, never silently dropped.
 
@@ -145,7 +145,7 @@ Batch preflight must confirm: `targets`, `scope`, `excluded`, `intensity`, `allo
 | **nuclei and other template-based vulnerability scanners (nikto, wpscan)** | **Do not run by default.** Only run when the user explicitly requests nuclei/scanner-based CVE or template scanning. A silent preflight assumption, L3 signal, fingerprint hint, or Phase 1/2 finding is not sufficient. Record the explicit request in `task.md`. |
 | Authenticated testing, batch testing, OOB, cloud metadata, internal probing | Ask first |
 | UNION-based SQL extraction, alert-based XSS validation | Ask first |
-| Data create/update/delete (with authorization) | Ask first, test data only. Numeric IDs, sequential IDs, `admin`, `test`, or values that could plausibly collide with production records are not test data. Prefer synthetic UUID-like values containing `pentest` and stop after proof. |
+| Data create/update/delete (with authorization) | Ask first, test data only. Numeric IDs, sequential IDs, `admin`, `test`, or values that could plausibly collide with production records are not test data. Prefer synthetic UUID-like values containing `appsec-test` and stop after proof. |
 | File upload, RCE, reverse shell, persistence, credential theft, exfiltration, DoS, evasion | Do not execute |
 
 When an action is not safe, provide a risk explanation, bounded manual validation outline, or report-ready statement.

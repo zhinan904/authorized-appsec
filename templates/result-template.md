@@ -1,4 +1,4 @@
-# Penetration Test Final Report Template
+# Authorized AppSec Assessment Report Template
 
 > This template defines the fixed delivery structure for `report.md`.
 > 
@@ -60,7 +60,7 @@ Required:
 ## report.md Fixed Structure
 
 ```markdown
-# Penetration Test Report - {target}
+# Authorized AppSec Assessment Report - {target}
 
 **Task ID**: {summary.task_id}
 **Test Time**: {summary.started_at} ~ {summary.ended_at}

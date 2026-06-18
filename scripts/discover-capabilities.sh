@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # discover-capabilities.sh
-# Discover available penetration testing tools and their binary paths.
+# Discover available AppSec assessment tools and their binary paths.
 # Output: capabilities.json with full binary paths for direct invocation.
 #
 # Usage:

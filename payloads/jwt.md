@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify JWT vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify JWT vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual unauthorized access is prohibited
 > - JWT payloads are for understanding attack surface only, **no persistent forged access**

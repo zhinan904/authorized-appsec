@@ -2,7 +2,7 @@
 
 > **Version**: 2.8.1 | **Updated**: 2026-06-01
 >
-> **Purpose**: Structured source code review methodology for web application penetration testing. Applies when source code is provided within scope.
+> **Purpose**: Structured source code review methodology for authorized application security assessment. Applies when source code is provided within scope.
 
 ---
 

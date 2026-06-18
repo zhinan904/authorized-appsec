@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify file upload vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify file upload vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual execution prohibited
 > - Webshell/command execution code for understanding attack surface only, **not as actual exploitation tool**

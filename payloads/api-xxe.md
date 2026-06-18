@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify XXE vulnerability risk characteristics in API endpoints.
+> This document is for **authorized AppSec assessment reference** only, helping identify XXE vulnerability risk characteristics in API endpoints.
 >
 > - All payloads are **technical principle demonstrations**, actual malicious operations are prohibited
 > - Payloads are for understanding API attack surface only, **do not enable harm**

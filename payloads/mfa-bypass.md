@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 >
-> This document is for **authorized penetration testing reference** only, helping identify MFA/2FA bypass vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify MFA/2FA bypass vulnerability risk characteristics.
 >
 > - All payloads are **technical principle demonstrations**, actual authentication bypass is prohibited
 > - MFA bypass payloads are for understanding attack surface only, **do not enable unauthorized access**

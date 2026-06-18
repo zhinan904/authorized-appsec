@@ -211,13 +211,13 @@ This entry is auto-generated from task results for subsequent semantic retrieval
     )
 
 
-def export_redteam_case(l3_root: Path, task_dir: Path, summary: dict, findings: list):
+def export_assessment_case(l3_root: Path, task_dir: Path, summary: dict, findings: list):
     if not _check_ready("knowledge_ready", None, summary):
         return
     findings = eligible_findings(findings)
     if not findings:
         return
-    base = l3_root / "internal-knowledge" / "redteam-cases"
+    base = l3_root / "internal-knowledge" / "assessment-cases"
     entries_dir = base / "entries"
     ensure_dir(entries_dir)
     task_id = summary.get("task_id", task_dir.name)
@@ -426,7 +426,7 @@ def main():
 
     export_knowledge_mapping(l3_root, task_dir, summary, findings)
     export_rag_entry(l3_root, task_dir, summary, findings)
-    export_redteam_case(l3_root, task_dir, summary, findings)
+    export_assessment_case(l3_root, task_dir, summary, findings)
     export_task_memory(l3_root, task_dir, summary, findings)
     export_self_distillation(l3_root, task_dir, summary, findings)
     export_context_snapshot(l3_root, task_dir, summary, findings, evidence)

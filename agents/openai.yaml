@@ -49,7 +49,7 @@ examples:
 
   - user: "I need to run a security test on this target: https://app.example.com"
     action: invoke
-    note: "Chinese language, same intent"
+    note: "Security-test phrasing with URL target"
 
   # Resume
   - user: "Resume the authorized appsec task PT-{YYYYMMDD}-{SEQ}-example-com"

@@ -154,7 +154,7 @@ bash scripts/task-control.sh list-processes <batch_dir>
 
 ## Batch Testing
 
-For multi-target penetration testing, use batch mode:
+For multi-target authorized AppSec assessment, use batch mode:
 
 ### Batch Structure
 

@@ -458,25 +458,26 @@ Read the relevant payload file before testing.
 ### URL Workflow
 
 ```
-http-probing → fingerprinting → url-extraction → directory-scanning → vulnerability-scanning
+http-probing → fingerprinting → url-extraction → directory-scanning → manual payload validation
 ```
 
 1. http-probing: Get basic fingerprint
 2. fingerprinting: Deep tech identification
 3. url-extraction: Find endpoints
 4. directory-scanning: Find hidden paths (if approved)
-5. vulnerability-scanning: Targeted scan based on fingerprint
+5. manual payload validation: Validate prioritized findings using the relevant `payloads/*.md`
+6. scanner-based validation: Run `vulnerability-scanning` only when the user explicitly approves nuclei/nikto/wpscan-style scanning
 
 ### Domain Workflow
 
 ```
-subdomain-discovery → http-probing → port-scanning → fingerprinting → vulnerability-scanning
+subdomain-discovery → http-probing → port-scanning → fingerprinting → manual payload validation
 ```
 
 ### IP Range Workflow
 
 ```
-port-scanning (web ports) → http-probing → fingerprinting → url-extraction → vulnerability-scanning
+port-scanning (web ports) → http-probing → fingerprinting → url-extraction → manual payload validation
 ```
 
 ---
@@ -546,7 +547,7 @@ Passive reconnaissance gathers intelligence without directly interacting with th
 | Certificate Transparency (crt.sh) | Subdomain discovery, internal hostnames | `curl -s "https://crt.sh/?q=%25.example.com&output=json"` |
 | DNS TXT records | SPF, domain verification, infrastructure hints | `dig example.com TXT +short` |
 | DNS CNAME/A records | Subdomain resolution, service identification | `dig example.com CNAME +short` |
-| Reverse DNS | IP-to-hostname mapping | `dig -x 192.168.1.1 +short` |
+| Reverse DNS | IP-to-hostname mapping | `dig -x 192.0.2.1 +short` |
 | WHOIS | Registrant info, nameservers, dates | `whois example.com` |
 
 ### Web Archive and URL History

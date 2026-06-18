@@ -2,7 +2,7 @@
 
 > ⚠️ **Security Boundary Statement**
 > 
-> This document is for **authorized penetration testing reference** only, helping identify file inclusion vulnerability risk characteristics.
+> This document is for **authorized AppSec assessment reference** only, helping identify file inclusion vulnerability risk characteristics.
 > 
 > - All payloads are **technical principle demonstrations**, actual RCE exploitation is prohibited
 > - LFI/RFI payloads are for understanding attack surface only, **no system control obtained**

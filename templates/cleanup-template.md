@@ -1,6 +1,6 @@
 # Cleanup & Rollback Protocol
 
-> **Purpose**: Systematic removal of test artifacts, data, and accounts created during authorized penetration testing.
+> **Purpose**: Systematic removal of test artifacts, data, and accounts created during authorized AppSec assessment.
 
 ---
 
@@ -73,7 +73,7 @@ Before delivering evidence, redact:
 |------|--------|
 | Session cookies/tokens | Replace values with `<REDACTED>` |
 | Credentials in screenshots | Blur or pixelate |
-| Internal IP addresses | Mask last octet (e.g., 192.168.1.XX) |
+| Internal IP addresses | Mask last octet (e.g., `<internal-ip-prefix>.XX`) |
 | API keys in raw responses | Replace with `<REDACTED>` |
 | Test account PII | Remove completely |
 | Email addresses | Mask domain-local part |

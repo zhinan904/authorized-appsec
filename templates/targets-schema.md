@@ -1,6 +1,6 @@
 # targets.json Schema
 
-> **Purpose**: Target registry and status control for batch penetration testing.
+> **Purpose**: Target registry and status control for batch authorized AppSec assessment.
 
 ---
 
