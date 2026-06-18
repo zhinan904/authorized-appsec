@@ -8,9 +8,9 @@ policy:
 
 triggers:
   # Direct invocation keywords
-  - pattern: "pentest|penetration test|security test|security audit|vulnerability scan"
+  - pattern: "authorized appsec|application security assessment|security assessment|security review|security audit|vulnerability assessment|vulnerability scan"
     confidence: high
-  - pattern: "test.*security|scan.*vulnerability|assess.*security"
+  - pattern: "test.*security|scan.*vulnerability|assess.*security|review.*appsec"
     confidence: medium
   # Target-specific triggers
   - pattern: "test (https?://|www\.|[a-z]+\.(com|org|net|io))"
@@ -18,12 +18,12 @@ triggers:
   - pattern: "(authorized|permitted|allowed).*(test|scan|audit)"
     confidence: high
   # Resume triggers
-  - pattern: "resume.*(task|test|pentest|scan)"
+  - pattern: "resume.*(task|assessment|test|scan)"
     confidence: high
   - pattern: "PT-[0-9]{8}"
     confidence: high
   # Batch triggers
-  - pattern: "batch.*(test|scan|pentest)"
+  - pattern: "batch.*(assessment|test|scan|review)"
     confidence: high
   - pattern: "multiple.*(target|domain|endpoint)"
     confidence: medium
@@ -43,7 +43,7 @@ examples:
     action: invoke
     note: "URL target; must confirm authorization, scope, and intensity before active probing"
 
-  - user: "Run a pentest on example.com"
+  - user: "Run an authorized security assessment on example.com"
     action: invoke
     note: "Domain target, will ask about subdomain scope"
 
@@ -52,7 +52,7 @@ examples:
     note: "Chinese language, same intent"
 
   # Resume
-  - user: "Resume the pentest task PT-{YYYYMMDD}-{SEQ}-example-com"
+  - user: "Resume the authorized appsec task PT-{YYYYMMDD}-{SEQ}-example-com"
     action: invoke
     note: "Resume existing task by ID"
 

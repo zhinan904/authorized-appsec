@@ -18,6 +18,7 @@ tar \
   --exclude='./screenshots' \
   --exclude='./dist' \
   --exclude='./build' \
+  --exclude='./.git' \
   --exclude='./.venv' \
   --exclude='./.pytest_cache' \
   --exclude='./__pycache__' \
