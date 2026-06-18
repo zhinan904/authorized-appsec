@@ -1,0 +1,253 @@
+# Authorized AppSec Testing Skill
+
+CLI-friendly workflow for authorized Web, API, and application security assessment.
+
+**Chinese documentation**: [`README.zh-CN.md`](./README.zh-CN.md)
+
+**Entry point**: `SKILL.md` (version and authoritative rules live there).
+**State management**: `memory-protocol.md`.
+
+## Core Design
+
+- **Evidence-driven**: every confirmed finding backed by current-task raw evidence. No severity from path shape, L3 recall, or historical cases alone.
+- **Gating severity model**: default Low; High/Critical only when the exploit chain is confirmed closed. Defect existence ≠ exploitability.
+- **Layered knowledge**: `payloads/` (safe, in-flow) → optional private references (not included in the public release) → L3 (local historical hypotheses).
+- **Coverage visibility**: the report explicitly surfaces untested/degraded surfaces instead of hiding them.
+
+## Core Files
+
+```text
+authorized-appsec/
+├── SKILL.md                  # entry point, authoritative rules
+├── memory-protocol.md        # task state management
+├── commands/                 # methodology & command references
+│   ├── capabilities.md       # runtime tool discovery
+│   ├── recon.md              # recon workflow by capability
+│   ├── ports.md              # web port selection
+│   ├── stack-mapping.md      # tech stack → vulnerability mapping
+│   ├── threat-modeling.md    # STRIDE methodology
+│   ├── source-code-review.md # source review methodology
+│   ├── brute-force.md        # credential brute-force
+│   ├── modern-auth.md        # OTP/slider/SSO/MFA/token lifecycle
+│   └── authenticated-testing.md  # Phase 3 authenticated branch
+├── payloads/                 # 55 vulnerability payload files (safe, in-flow)
+├── templates/                # 23 output templates (incl. coverage-checklist)
+└── scripts/                  # 19 automation scripts
+```
+
+The public release intentionally excludes `references/`, private L3 knowledge, raw evidence, historical reports, and task results. The published package contains the workflow, safety boundaries, payload validation guidance, templates, scripts, and tests.
+
+Optional local archives may exist outside this directory, but they are not required for the skill to work:
+
+```text
+~/authorized-appsec/results/
+~/authorized-appsec/l3/      # optional local private knowledge, not published
+```
+
+## Default Output
+
+Use a user-specified directory when provided. When resuming, continue in the existing task directory. Otherwise create task output in `$PENTEST_RESULTS_ROOT` when set, or `~/authorized-appsec/results/`:
+
+```text
+results/
+└── PT-{YYYYMMDD}-{SEQ}-{target_slug}/
+    ├── task.md
+    ├── findings.md
+    ├── summary.json
+    ├── findings.json
+    ├── evidence-index.json
+    ├── l3-hypotheses.json
+    ├── report.md
+    ├── 01-fingerprint.md
+    ├── 02-discovery.md
+    ├── 03-vuln-test.md
+    ├── 04-chain.md
+    ├── attack-graph.md
+    ├── sessions/
+    ├── raw/
+    └── screenshots/
+```
+
+Do not write task output inside this skill package. Do not use legacy result roots as implicit output roots. A legacy path is valid only when the user explicitly provides it or when resuming an existing task that already lives there.
+
+`attack-graph.md` is regenerated from the current task's phase files, findings, structured evidence, and raw PoC files. Historical L3 entries and stack templates are reference material only; they are not graph nodes or current-target fingerprint facts.
+
+## Scripts
+
+Run capability discovery inside the VM before testing:
+
+```bash
+bash scripts/discover-capabilities.sh capabilities.json
+```
+
+Run structure validation from this directory:
+
+```bash
+bash scripts/check-structure.sh
+```
+
+Generate a report from a task directory:
+
+```bash
+# Install test dependencies if needed
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+
+# Initialize a single task directory
+python3 scripts/init_task.py https://example.com --type url
+
+# Or with custom output directory
+python3 scripts/init_task.py https://example.com --type url --output-dir /path/to/results
+
+# Generate structured outputs and report
+python3 scripts/ensure_structured_outputs.py <task_dir>
+python3 scripts/generate_report.py <task_dir>
+```
+
+Import a legacy vulnerability report:
+
+```bash
+python3 scripts/import_report.py ./old-report.docx --target https://example.com
+python3 scripts/import_report.py ./old-report.html --target example.com --default-status suspicious
+```
+
+Supported import formats are `.md`, `.html`, `.docx`, and `.doc` when LibreOffice/soffice is available. Imported reports become `IMPORTED-*` task directories with the original report stored under `raw/`.
+
+Export reusable knowledge only when explicitly requested:
+
+```bash
+python3 scripts/generate_report.py <task_dir> --export-l3 <l3_root>
+```
+
+Process control (terminate running tasks):
+
+```bash
+# Terminate single task
+bash scripts/task-control.sh terminate <task_dir> [--force]
+
+# Terminate all tasks in batch
+bash scripts/task-control.sh terminate-batch <batch_dir>
+
+# Terminate specific target in batch (use T-XXX format)
+bash scripts/task-control.sh terminate-batch <batch_dir> --target T-003
+
+# Add tool PID for tracking
+bash scripts/task-control.sh add-tool-pid <task_dir> --pid <pid> --name <tool_name>
+
+# Cleanup tool PID
+bash scripts/task-control.sh cleanup-tool-pid <task_dir> --pid <pid>
+
+# Check task process status
+bash scripts/task-control.sh status <task_dir>
+
+# List all processes in batch
+bash scripts/task-control.sh list-processes <batch_dir>
+```
+
+**Note**: Target ID format is `T-XXX` (e.g., `T-001`, `T-003`), not slug name.
+
+---
+
+## Batch Testing
+
+For multi-target penetration testing, use batch mode:
+
+### Batch Structure
+
+```text
+results/
+└── BATCH-{YYYYMMDD}-{SEQ}/
+    ├── batch.md              # Batch entry point
+    ├── targets.json          # Target registry and status
+    ├── summary.json          # Batch-level summary
+    ├── report.md             # Batch-level report
+    └── targets/
+        ├── T-001-{slug}/     # Target 1 (single-task structure)
+        ├── T-002-{slug}/     # Target 2
+        └── T-003-{slug}/     # Target 3
+```
+
+### Batch Workflow
+
+| Phase | Purpose |
+|-------|---------|
+| Preflight | Confirm batch authorization boundary |
+| Initialize | Create batch directory and targets.json |
+| Discovery | Filter candidates (if needed) |
+| Selection | User confirms targets for testing |
+| Dispatch | Create task directories for selected targets |
+| Execute | Run single-target flow for each task |
+| Aggregate | Collect results from completed tasks |
+| Report | Generate batch-level report |
+
+### Process Control
+
+Each task tracks processes in `.task-pids.json`:
+
+```json
+{
+  "main_pid": 12345,
+  "tool_pids": [{"pid": 12346, "name": "httpx"}],
+  "status": "running"
+}
+```
+
+Termination signals:
+- **SIGTERM** (default): Graceful termination, allows cleanup
+- **SIGKILL** (`--force`): Immediate termination, no cleanup
+
+See `templates/batch-template.md` and `templates/process-control.md` for details.
+
+### Batch Scripts
+
+```bash
+# Initialize batch from targets file (one target per line: T-001 https://...)
+python3 scripts/init_batch.py <batch_dir> <targets_file>
+
+# Aggregate results from completed targets
+python3 scripts/aggregate_batch.py <batch_dir>
+
+# Generate batch-level report
+python3 scripts/generate_batch_report.py <batch_dir>
+```
+
+### Cleanup & Rollback
+
+```bash
+# Clean up test artifacts for a single task
+bash scripts/cleanup.sh <task_dir>
+
+# Preview cleanup without executing
+bash scripts/cleanup.sh <task_dir> --dry-run
+
+# Clean up all targets in a batch
+bash scripts/cleanup.sh <batch_dir> --batch
+```
+
+See `templates/cleanup-template.md` for full rollback protocol.
+
+### L3 Knowledge Retrieval
+
+```bash
+# Search L3 knowledge for relevant context before starting a task
+python3 scripts/retrieve_l3.py <l3_root> --target https://example.com --limit 5
+python3 scripts/retrieve_l3.py <l3_root> --category sqli --limit 3
+```
+
+L3 retrieval results are historical references. They must not be promoted into current findings, fingerprints, or attack graphs unless current-task evidence independently supports them. L3 export is explicit only and requires at least one confirmed `distillation_candidate=true` finding. Distill complex/high-value vulnerabilities and reusable attack chains; do not export ordinary low-risk configuration findings unless they are part of a confirmed higher-value chain.
+
+## Publishing Notes
+
+For a clean published skill, keep `SKILL.md`, `memory-protocol.md`, `commands/`, `payloads/`, `templates/`, `scripts/`, `tests/`, and the open-source project metadata. Exclude `references/`, `l3/`, `.DS_Store`, caches, historical task results, raw evidence, screenshots, HAR/PCAP files, real reports, and platform-specific binaries unless they are intentionally distributed and documented.
+
+Build a public archive:
+
+```bash
+bash scripts/build-public-package.sh
+```
+
+See `OPEN_SOURCE_CHECKLIST.md` before publishing.
+
+## License
+
+Apache License 2.0. See [`LICENSE`](./LICENSE).

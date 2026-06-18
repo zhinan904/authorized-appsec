@@ -1,0 +1,76 @@
+interface:
+  display_name: "Authorized AppSec"
+  short_description: "Authorized Web, API, and application security assessment workflow"
+  default_prompt: "Use $authorized-appsec to run an authorized Web, API, or application security assessment with scoped, evidence-based reporting."
+
+policy:
+  allow_implicit_invocation: true
+
+triggers:
+  # Direct invocation keywords
+  - pattern: "pentest|penetration test|security test|security audit|vulnerability scan"
+    confidence: high
+  - pattern: "test.*security|scan.*vulnerability|assess.*security"
+    confidence: medium
+  # Target-specific triggers
+  - pattern: "test (https?://|www\.|[a-z]+\.(com|org|net|io))"
+    confidence: high
+  - pattern: "(authorized|permitted|allowed).*(test|scan|audit)"
+    confidence: high
+  # Resume triggers
+  - pattern: "resume.*(task|test|pentest|scan)"
+    confidence: high
+  - pattern: "PT-[0-9]{8}"
+    confidence: high
+  # Batch triggers
+  - pattern: "batch.*(test|scan|pentest)"
+    confidence: high
+  - pattern: "multiple.*(target|domain|endpoint)"
+    confidence: medium
+
+anti_triggers:
+  # Red-team / post-exploitation (should NOT invoke this skill)
+  - pattern: "red.?team|adversary|phishing|malware|persistence|lateral.?move"
+    action: reject
+  - pattern: "credential.?theft|steal.*password|keylog|covert.?access"
+    action: reject
+  - pattern: "evasion|bypass.*antivirus|bypass.*edr|stealth"
+    action: reject
+
+examples:
+  # Standard invocation
+  - user: "Test https://api.example.com for vulnerabilities"
+    action: invoke
+    note: "URL target; must confirm authorization, scope, and intensity before active probing"
+
+  - user: "Run a pentest on example.com"
+    action: invoke
+    note: "Domain target, will ask about subdomain scope"
+
+  - user: "I need to run a security test on this target: https://app.example.com"
+    action: invoke
+    note: "Chinese language, same intent"
+
+  # Resume
+  - user: "Resume the pentest task PT-{YYYYMMDD}-{SEQ}-example-com"
+    action: invoke
+    note: "Resume existing task by ID"
+
+  # Batch
+  - user: "I need to test 5 domains for the same vulnerability class"
+    action: invoke
+    note: "Multi-target batch testing"
+
+  # Artifact analysis (no network needed)
+  - user: "Analyze this curl response for security issues"
+    action: invoke
+    note: "Local analysis, no active probing"
+
+  # Rejection examples
+  - user: "Help me write a phishing page"
+    action: reject
+    note: "Out of scope - red team/phishing"
+
+  - user: "How do I bypass the WAF to exploit this XSS"
+    action: reject
+    note: "Out of scope - exploitation beyond validation"
