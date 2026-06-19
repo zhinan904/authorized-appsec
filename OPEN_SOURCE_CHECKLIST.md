@@ -14,18 +14,22 @@ Use this checklist before publishing the public repository.
 
 ## Exclude From Public Release
 
-- [ ] `references/`
-- [ ] `l3/`
-- [ ] `results/`
-- [ ] `.pytest_cache/`
-- [ ] `__pycache__/`
-- [ ] `*.pyc`
-- [ ] `.DS_Store`
-- [ ] raw evidence
-- [ ] screenshots
-- [ ] HAR/Burp/PCAP files
-- [ ] real vulnerability reports
-- [ ] credentials, cookies, tokens, API keys, and private keys
+Every row below must be absent from the published repository. Status reflects the verified state of `main` on 2026-06-18; re-run the Checks before each release.
+
+| Item | Excluded via | Status |
+|------|--------------|--------|
+| `references/` | `.gitignore` (not part of public release) | [x] absent |
+| `l3/` | `.gitignore` (local private knowledge) | [x] absent |
+| `results/` | `.gitignore` (task output kept outside the package) | [x] absent |
+| `.pytest_cache/` | `.gitignore` | [x] absent from repo (local only) |
+| `__pycache__/` | `.gitignore` | [x] absent from repo (local only) |
+| `*.pyc` | `.gitignore` | [x] absent from repo (local only) |
+| `.DS_Store` | `.gitignore` | [x] absent from repo (local only) |
+| raw evidence | kept under task `raw/`, never in the package | [x] absent |
+| screenshots | kept under task `screenshots/`, never in the package | [x] absent |
+| HAR/Burp/PCAP files | `.gitignore` (`*.har`, `*.burp`, `*.pcap`, `*.pcapng`) | [x] absent |
+| real vulnerability reports | not tracked; imported into local tasks only | [x] absent |
+| credentials, cookies, tokens, API keys, private keys | never committed; verified by secret scan below | [x] none found |
 
 ## Checks
 
@@ -34,8 +38,16 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
 bash scripts/check-structure.sh
 .venv/bin/python -m pytest tests -q
-rg -n -P "\p{Han}" . -g '!README.zh-CN.md' -g '!references/**' -g '!l3/**'
-rg -n "AKIA|BEGIN .*PRIVATE KEY|Bearer |Authorization:|password|passwd|secret|token|cookie|session|api[_-]?key|access[_-]?key|private[_-]?key" . -g '!references/**' -g '!l3/**'
+# Non-ASCII / CJK detection — portable across BSD grep (macOS) and GNU grep (Linux).
+# Prefer rg when available; fall back to grep -P (GNU) / LC_ALL=C grep for ASCII range.
+if command -v rg >/dev/null 2>&1; then
+  rg -n --pcre2 "\p{Han}" . -g '!README.zh-CN.md' -g '!references/**' -g '!l3/**' || true
+else
+  LC_ALL=C grep -rnP "[\x{4e00}-\x{9fff}]" . --include='*.md' --exclude='README.zh-CN.md' || true
+fi
+# Secret / sensitive-token scan
+rg -n "AKIA|BEGIN .*PRIVATE KEY|Bearer |Authorization:|password|passwd|secret|token|cookie|session|api[_-]?key|access[_-]?key|private[_-]?key" . -g '!references/**' -g '!l3/**' || true
+# Leftover local artifacts that should not be committed
 find . -name '.DS_Store' -o -name '__pycache__' -o -name '*.pyc' -o -name '.pytest_cache'
 ```
 

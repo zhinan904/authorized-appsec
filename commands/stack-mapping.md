@@ -1,6 +1,6 @@
 # Tech Stack to Vulnerability Mapping
 
-> **Version**: 2.10.0 | **Updated**: 2026-06-02
+> **Version**: 2.21.0 | **Updated**: 2026-06-18
 >
 > **Purpose**: Map detected technology stacks to likely vulnerability classes, enabling targeted testing after fingerprinting.
 

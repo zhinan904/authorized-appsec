@@ -12,8 +12,11 @@ triggers:
     confidence: high
   - pattern: "test.*security|scan.*vulnerability|assess.*security|review.*appsec"
     confidence: medium
-  # Target-specific triggers
-  - pattern: "test (https?://|www\.|[a-z]+\.(com|org|net|io))"
+  # Target-specific triggers (require a security context word so functional/non-security
+  # "test <url>" messages do not auto-invoke this skill)
+  - pattern: "(security|vuln|pentest|appsec).*(test|scan|assess|review).*(https?://|www\\.|[a-z]+\\.(com|org|net|io))"
+    confidence: high
+  - pattern: "(test|scan|assess|review).*(https?://|www\\.|[a-z]+\\.(com|org|net|io)).*(security|vuln|pentest|appsec)"
     confidence: high
   - pattern: "(authorized|permitted|allowed).*(test|scan|audit)"
     confidence: high

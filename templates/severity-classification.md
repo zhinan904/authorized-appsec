@@ -1,6 +1,6 @@
 # Vulnerability Severity Classification
 
-> **Version**: 2.10.0 | **Updated**: 2026-06-02
+> **Version**: 2.21.0 | **Updated**: 2026-06-18
 
 This document defines severity classification rules for authorized AppSec assessment findings. The classification prioritizes practical exploitability and attack impact over theoretical CVSS scores.
 

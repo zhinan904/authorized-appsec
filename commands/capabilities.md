@@ -1,6 +1,6 @@
 # Authorized AppSec Capabilities
 
-> **Version**: 2.10.0 | **Updated**: 2026-06-02
+> **Version**: 2.21.0 | **Updated**: 2026-06-18
 
 This document defines capabilities, not tools. The skill discovers available tools inside the Kali Linux VM or equivalent execution VM and selects the best candidate for each capability.
 
@@ -565,7 +565,10 @@ If no tool available:
   "capabilities": {
     "subdomain-discovery": {
       "candidates": ["subfinder", "amass"],
-      "selected": "subfinder"
+      "binary_paths": ["/usr/bin/subfinder", "/usr/bin/amass"],
+      "selected": "subfinder",
+      "selected_path": "/usr/bin/subfinder",
+      "requires_explicit_approval": false
     },
     "http-probing": {
       "candidates": ["httpx"],
@@ -574,7 +577,22 @@ If no tool available:
     "port-scanning": {
       "candidates": [],
       "selected": null
+    },
+    "vulnerability-scanning": {
+      "candidates": ["nuclei"],
+      "selected": "nuclei",
+      "requires_explicit_approval": true,
+      "approval_reason": "Template-based scanners (nuclei/nikto/wpscan) run only on explicit user request per SKILL.md Nuclei Policy"
     }
-  }
+  },
+  "mcp_server": null,
+  "wordlists": ["/usr/share/seclists/Discovery/Web-Content/common.txt"],
+  "nuclei_templates": []
 }
 ```
+
+Field notes:
+
+- `binary_paths` / `selected_path`: absolute paths to the discovered binaries, for direct invocation.
+- `requires_explicit_approval` + `approval_reason`: present on `vulnerability-scanning`, `brute-force`, `oob-callback`, and `k8s-client`. `"available"` does **not** mean `"may run"` — these capabilities still need explicit user opt-in per their policy.
+- `nuclei_templates`: sample of available nuclei template names (empty when nuclei is not installed or not requested). Listed for awareness only; it never authorizes running nuclei.

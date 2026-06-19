@@ -1,6 +1,6 @@
 # Authorized AppSec Workflow Guide
 
-> **Version**: 2.8.1 | **Updated**: 2026-06-01
+> **Version**: 2.21.0 | **Updated**: 2026-06-18
 >
 > **Capability-first**: This guide is organized by capabilities, not specific tools.
 > Tools are discovered inside the Kali Linux VM or equivalent execution VM at runtime.
