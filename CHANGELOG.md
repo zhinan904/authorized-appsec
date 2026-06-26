@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.23.0 - 2026-06-26
+
+Customer-facing Chinese report format + coverage-checklist alignment. This is a major feature update to the report output pipeline.
+
+### Report format overhaul (`generate_report.py`)
+
+The report is now a customer-deliverable Chinese document aligned with standard AppSec reporting, instead of an internal English debug view.
+
+- **V-XX customer numbering**: internal `F-XXX` finding IDs are rendered as `V-XX` (severity-descending: critical → V-01), with the F-XXX kept as a small traceability note. The internal scheme stays the single source of truth.
+- **Inline evidence with redaction**: each confirmed finding embeds its full curl + HTTP/JSON evidence block. A new `redact_response()` masks session keys, tokens, Bearer credentials, and 32+ hex values to `***REDACTED***`, while preserving test phone numbers and paths. A post-render gate (`check_report_redaction`) warns if any secret-like value survives.
+- **Six-chapter + four-appendix structure**: 一、漏洞汇总 (V-XX + CVSS + Chinese severity) / 二、被测系统资产画像 (8 sub-sections) / 三、漏洞详情 / 四、测试过程 / 五、攻击链 (AP-XXX) / 六、安全加固建议 (14-day / 30-day / ongoing tiers) + appendices A-D (API stats / WAF analysis / test limitations / severity reference).
+- **Test process in A.1 / A.1.1 numbering**: `build_test_process()` renders the coverage-checklist as per-category records in the standard 安服 numbering style, with each item annotated 已发现 / 未发现 / 未充分测试 / 受限. The Scope Adherence section is correctly excluded (it appears elsewhere).
+- **Appendix D concise**: the severity reference is extracted to level definitions + per-class tables only, instead of dumping the full 200+ line document.
+
+### Coverage checklist alignment (`coverage-checklist.md`)
+
+Expanded from 41 rows / 5 categories to 76 rows / 8 categories, closing the gap where `severity-classification.md` and `payloads/` had been extended but the checklist (the execution driver) had not.
+
+- **Authenticated face ④ expanded** to independent rows: Session/token lifecycle, JWT, MFA/2FA, OAuth/OIDC, Password reset, CSRF, CAPTCHA/lockout.
+- **New section: Business Logic Surface** (7 rows: race condition, price/quantity tampering, payment step skip, payment replay, coupon abuse, OTP bypass, workflow manipulation).
+- **New section: AI / LLM Surface** (9 rows: prompt injection, indirect injection, system prompt leak, tool-use bypass, memory/RAG poisoning, vector DB read, command execution, cost DoS, endpoint existence).
+- **New section: Cloud Native / Infrastructure** (13 rows: subdomain takeover, cloud metadata, object storage, K8s API/Kubelet/etcd, SA token, container escape, WebSocket, CORS, cache poisoning, Host header, WAF origin).
+- **New section: Modern Protocol Surface** (4 rows: gRPC auth bypass, protobuf injection, HTTP/2 single-packet race ×2).
+- Each conditional section carries a presence prerequisite — features absent from the target are marked `out-of-scope` with reason, never left blank.
+
+### Other
+
+- `request_guard.py`: new mandatory request-logging + scope-check guard for manual HTTP requests.
+- `build_recommendations()` ongoing-improvement tier no longer duplicates per-finding remediation.
+- Tests: 106 passed (report-format coverage added).
+
 ## 2.22.4 - 2026-06-20
 
 Report-gate parsing robustness fixes.

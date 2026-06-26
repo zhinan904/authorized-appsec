@@ -5,7 +5,7 @@ description: Use for authorized Web, API, or application security assessment whe
 
 # Authorized AppSec Testing
 
-**Version**: 2.22.5 | **Updated: 2026-06-20**
+**Version**: 2.23.0 | **Updated: 2026-06-26**
 
 ## Purpose
 

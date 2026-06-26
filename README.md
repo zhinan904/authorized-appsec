@@ -119,6 +119,20 @@ python3 scripts/ensure_structured_outputs.py <task_dir>
 python3 scripts/generate_report.py <task_dir>
 ```
 
+The generated `report.md` is a customer-deliverable Chinese report (渗透测试报告) with a fixed structure:
+
+| Chapter | Content |
+|---------|---------|
+| 一、漏洞汇总 | V-XX numbering + Chinese severity + CVSS + status |
+| 二、被测系统资产画像 | 8 sub-sections: basics / tech stack / deployment / auth / components / modules / data flow / external deps |
+| 三、漏洞详情 | V-XX + full curl/HTTP evidence (session keys redacted) + impact + remediation |
+| 四、测试过程 | A.1 / A.1.1 per-item test records (covered / degraded / not-covered) from the coverage checklist |
+| 五、攻击链 | AP-XXX chains from chain analysis, F-XXX→V-XX mapped |
+| 六、安全加固建议 | Tiered: high (14 days) / medium (30 days) / ongoing (SDL) |
+| 附录 A-D | API endpoint stats / WAF analysis / test limitations / severity reference |
+
+Internal `F-XXX` finding IDs are rendered as customer-facing `V-XX` (severity-descending), keeping F-XXX as a traceability note. Evidence blocks are redacted by `redact_response()` (session keys / tokens / 32+ hex → `***REDACTED***`). The report is the only sanctioned output — never hand-written in free prose.
+
 Import a legacy vulnerability report:
 
 ```bash
