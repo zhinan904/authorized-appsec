@@ -16,6 +16,14 @@
 
 ---
 
+## Scope Guard Reminder
+
+Every validation request must target a host approved in preflight `scope`. Hosts observed via response leakage (actuator `_links`, internal IPs, sibling subdomains) are evidence only — never request them. If a payload would target an out-of-scope host, record the host in `02-discovery.md` out-of-scope table and stop; do not probe.
+
+Manual single requests must use `python3 scripts/request_guard.py <task_dir> <url> --phase 3`; it verifies the scope allowlist before sending traffic, stores sanitized raw evidence, and appends a guarded request-log row.
+
+---
+
 ## Validation Log
 
 ### Test Entry Format
@@ -24,6 +32,7 @@
 ## Test #{n}: {vulnerability_class} - {endpoint}
 
 **Target**: {endpoint} - {parameter}
+**Target Host**: {host — must be in scope allowlist}
 **Queue Priority**: {P0/P1/P2}
 **Started At**: {timestamp}
 **Session**: {anonymous/user/admin}

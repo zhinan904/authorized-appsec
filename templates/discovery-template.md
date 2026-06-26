@@ -27,6 +27,42 @@
 
 ---
 
+## Scope Allowlist & Guard
+
+List the hosts approved in preflight `scope`. Every request in this phase must target a host in this allowlist. Hosts observed but NOT approved go in the "Out-of-Scope (recorded, not probed)" table below — they are never requested.
+
+**Approved scope hosts** (from preflight):
+
+| Host | In Scope? | Notes |
+|------|-----------|-------|
+| {target host} | yes | primary target |
+| {user-added host} | yes | user explicitly added in preflight |
+
+**Out-of-scope hosts observed** (record as evidence only — DO NOT resolve/connect/probe):
+
+| Host | How Observed | Why Out-of-Scope |
+|------|--------------|------------------|
+| {gateway-enterprise} | actuator `_links` href | internal name; not in preflight scope |
+| {sibling.example.com} | wildcard cert SAN / naming inference | single-host scope; user did not add |
+
+---
+
+## Request Log (mandatory — every request made this phase)
+
+Every active request issued in Phase 1-2 is logged here. A discovery phase with zero rows means no discovery was performed. This is the auditable proof of *which hosts were actually probed* and the basis for the Scope Guard check.
+
+Manual single requests must use `python3 scripts/request_guard.py <task_dir> <url> --phase discovery`; it writes this row and stores sanitized raw evidence automatically.
+
+| # | Method | Host (requested) | Path | Status | In Scope? | Tool | Notes |
+|---|--------|------------------|------|--------|-----------|------|-------|
+| 1 | GET | {target} | {/api/v1/users} | {200} | yes | request_guard | {ref to raw} |
+| 2 | GET | {target} | {/actuator} | {200} | yes | request_guard | {ref to raw} |
+| {n} | {method} | {host} | {path} | {status} | {yes/no} | {tool} | |
+
+> If any row's Host is not in the Approved scope hosts table, flag it as a boundary violation and stop — escalate to the user. Do not continue probing out-of-scope hosts.
+
+---
+
 ## Subdomain Discovery (If In Scope)
 
 **Tool Used**: {subfinder/amass/manual}
@@ -129,6 +165,8 @@ Hidden parameters found by fuzzing known endpoints — not present in JS/API ext
 | {/admin} | 403 | {bytes} | no |
 | {/backup} | 200 | {bytes} | no |
 | {/config.old} | 200 | {bytes} | no |
+
+**If no directory-scanning tool is available** (ffuf/gobuster/dirsearch/feroxbuster all missing): do **not** hand-roll a large `curl` path list. Degrade to passive endpoint extraction only (JS bundles / source maps / OpenAPI / sitemap / robots.txt), mark this capability `degraded` in coverage-checklist with reason "tool unavailable, passive-only", and note it here. A bounded manual check of a handful of known endpoints is acceptable; unbounded batch curling is not.
 
 ---
 

@@ -3,6 +3,14 @@
 - task_id: PT-{YYYYMMDD}-{SEQ}-example-com
 - target: https://example.com
 - target_type: url
+- preflight_complete: false
+- authorization: pending
+- scope: pending
+- scope_allowlist: example.com
+- approved_ports: default-for-target
+- intensity: pending
+- automation: pending
+- credentials: pending
 - results_root: {RESULTS_ROOT}
 - task_dir: {RESULTS_ROOT}/PT-{YYYYMMDD}-{SEQ}-example-com
 - status: in_progress
@@ -18,6 +26,13 @@
 
 ## Summary
 
+- preflight:
+  - complete: false
+  - authorization: pending
+  - scope_allowlist: example.com
+  - intensity: pending
+  - automation: pending
+  - credentials: pending
 - tech_stack: unknown
 - waf: unknown
 - finding_counts:
@@ -44,3 +59,5 @@
 - Update this file on every phase switch, new confirmed finding, task pause or resume
 - Results for this task stay under `task_dir` unless the user explicitly requests migration.
 - Mini Program artifacts: extract backend hosts and confirm same-host Web surface (`/`, `/login`, `/admin`, feature paths) before declaring scope complete.
+- Before active probing, set `preflight_complete: true` only after authorization, scope, intensity, automation, and credentials are explicitly decided.
+- Every request host in `02-discovery.md` and `03-vuln-test.md` must be present in `scope_allowlist`; free-form `scope` text is not treated as a machine allowlist.

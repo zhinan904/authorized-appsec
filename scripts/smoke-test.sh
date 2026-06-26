@@ -50,7 +50,7 @@ done
 # 3. Scripts
 echo ""
 echo "3/10 Checking scripts..."
-for script in discover-capabilities.sh ensure_structured_outputs.py generate_report.py auto_l3_hypotheses.py capture_evidence.py exploit_search.py import_report.py check-structure.sh check-task.sh task-control.sh export_to_l3.py init_batch.py init_task.py cleanup.sh aggregate_batch.py generate_batch_report.py retrieve_l3.py smoke-test.sh build-public-package.sh; do
+for script in discover-capabilities.sh request_guard.py ensure_structured_outputs.py generate_report.py auto_l3_hypotheses.py capture_evidence.py exploit_search.py import_report.py check-structure.sh check-task.sh task-control.sh export_to_l3.py init_batch.py init_task.py cleanup.sh aggregate_batch.py generate_batch_report.py retrieve_l3.py smoke-test.sh build-public-package.sh; do
   if [ ! -f "$SKILL_ROOT/scripts/$script" ]; then
     echo "  ERROR: Missing script: $script"
     incr_error
@@ -63,14 +63,28 @@ done
 echo ""
 echo "4/10 Checking script syntax..."
 if command -v "$PYTHON_BIN" &>/dev/null; then
+  # Redirect pycache OUT of the (possibly read-only) package dir so a permission
+  # error on __pycache__ is never mistaken for a syntax error.
+  PYCACHE_TMP="$(mktemp -d 2>/dev/null || echo /tmp/appsec-pycache-$$)"
   for py in "$SKILL_ROOT"/scripts/*.py; do
-    if "$PYTHON_BIN" -m py_compile "$py" 2>/dev/null; then
+    err_out="$(PYTHONPYCACHEPREFIX="$PYCACHE_TMP" "$PYTHON_BIN" -m py_compile "$py" 2>&1 >/dev/null)" || true
+    if [[ -z "$err_out" ]]; then
       echo "  OK: $(basename "$py") syntax"
+    elif echo "$err_out" | grep -qiE 'permission denied|read-only|errno 13|EROFS|not writable'; then
+      # The check itself can't run (e.g. package dir owned by nobody:nogroup);
+      # fall back to a pure parse that writes nothing.
+      if "$PYTHON_BIN" -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$py" 2>/dev/null; then
+        echo "  OK: $(basename "$py") syntax (py_compile blocked by permission, ast.parse passed)"
+      else
+        echo "  ERROR: $(basename "$py") syntax error"
+        incr_error
+      fi
     else
       echo "  ERROR: $(basename "$py") syntax error"
       incr_error
     fi
   done
+  rm -rf "$PYCACHE_TMP" 2>/dev/null || true
 else
   echo "  WARNING: python3 not available, skipping Python syntax check"
   incr_warn
@@ -116,7 +130,7 @@ fi
 # 6. Templates
 echo ""
 echo "6/10 Checking templates..."
-TEMPLATE_COUNT=$(find "$SKILL_ROOT/templates" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+TEMPLATE_COUNT=$(find "$SKILL_ROOT/templates" -name "*.md" -type f ! -name "._*" 2>/dev/null | wc -l | tr -d ' ')
 echo "  Template files: $TEMPLATE_COUNT"
 if [ "$TEMPLATE_COUNT" -lt 17 ]; then
   echo "  WARNING: Expected at least 17 template files, found $TEMPLATE_COUNT"
@@ -128,7 +142,7 @@ fi
 # 7. Payloads
 echo ""
 echo "7/10 Checking payloads..."
-PAYLOAD_COUNT=$(find "$SKILL_ROOT/payloads" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+PAYLOAD_COUNT=$(find "$SKILL_ROOT/payloads" -name "*.md" -type f ! -name "._*" 2>/dev/null | wc -l | tr -d ' ')
 echo "  Payload files: $PAYLOAD_COUNT"
 if [ "$PAYLOAD_COUNT" -lt 50 ]; then
   echo "  WARNING: Expected at least 50 payload files, found $PAYLOAD_COUNT"
@@ -268,7 +282,7 @@ print('OK' if not missing else f'MISSING: {missing}')
     fi
 
     # Generate report
-    "$PYTHON_BIN" "$SKILL_ROOT/scripts/generate_report.py" "$TASK_DIR" 2>/dev/null
+    "$PYTHON_BIN" "$SKILL_ROOT/scripts/generate_report.py" "$TASK_DIR" --skip-gate --gate-override-reason "smoke-test fixture without live request logs" 2>/dev/null
     if [ -f "$TASK_DIR/report.md" ]; then
       echo "  OK: report.md generated"
     else

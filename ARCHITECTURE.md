@@ -1,6 +1,6 @@
 # Authorized AppSec Skill Architecture
 
-> **Version**: 2.21.0 | **Updated: 2026-06-18**
+> **Version**: 2.22.5 | **Updated: 2026-06-20**
 
 ---
 
@@ -32,7 +32,7 @@ flowchart TB
         PAY[payloads/<br/>Payload Library]
         REF[private references<br/>Optional Extension]
         TMP[templates/<br/>Core + Optional]
-        SCR[scripts/<br/>19 Automation Scripts]
+        SCR[scripts/<br/>20 Automation Scripts]
     end
 
     subgraph Control["Process Control"]
@@ -176,6 +176,7 @@ authorized-appsec/
 │
 ├── scripts/                      # Automation scripts
 │   ├── discover-capabilities.sh  # VM tool discovery
+│   ├── request_guard.py          # Scope-checked single request + automatic logging
 │   ├── ensure_structured_outputs.py # JSON sync
 │   ├── generate_report.py        # Report generation
 │   ├── check-structure.sh        # Self-validation

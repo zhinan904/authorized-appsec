@@ -11,6 +11,8 @@ CLI-friendly workflow for authorized Web, API, and application security assessme
 
 Run active testing from a Kali Linux VM or an equivalent isolated security-testing VM where this skill directory is available. Capability discovery and network tools must run inside that VM, not from the host workstation. Keep task outputs outside the skill package, using a user-specified output directory, `$AUTHORIZED_APPSEC_RESULTS_ROOT`, or `~/authorized-appsec/results/`.
 
+For installation into the agent skill path, read-only directory handling, and known tool gaps (OOB / gRPC / k8s), see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
+
 ## Core Design
 
 - **Evidence-driven**: every confirmed finding backed by current-task raw evidence. No severity from path shape, L3 recall, or historical cases alone.
@@ -36,7 +38,7 @@ authorized-appsec/
 │   └── authenticated-testing.md  # Phase 3 authenticated branch
 ├── payloads/                 # 55 vulnerability payload files (safe, in-flow)
 ├── templates/                # 23 output templates (incl. coverage-checklist)
-└── scripts/                  # 19 automation scripts
+└── scripts/                  # 20 automation scripts
 ```
 
 The public release intentionally excludes `references/`, private L3 knowledge, raw evidence, historical reports, and task results. The published package contains the workflow, safety boundaries, payload validation guidance, templates, scripts, and tests.
@@ -89,6 +91,15 @@ Run structure validation from this directory:
 ```bash
 bash scripts/check-structure.sh
 ```
+
+For a manual single HTTP request, use the scope-checked wrapper so the request is logged automatically:
+
+```bash
+python3 scripts/request_guard.py <task_dir> https://example.com/login --phase discovery
+python3 scripts/request_guard.py <task_dir> https://example.com/api/search --phase 3 --method POST --idempotent-post --body '{"q":"appsec-test"}'
+```
+
+Manual single requests must use this wrapper. It verifies completed preflight, `scope_allowlist`, approved ports, and scoped `Host` headers before sending traffic, saves sanitized raw evidence under `raw/`, and appends the required request row to `02-discovery.md` or `03-vuln-test.md`. If `approved_ports` is omitted or set to `default-for-target`, the target URL's default or explicit port is enforced.
 
 Generate a report from a task directory:
 

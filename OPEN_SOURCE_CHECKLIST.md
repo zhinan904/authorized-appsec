@@ -14,12 +14,12 @@ Use this checklist before publishing the public repository.
 
 ## Exclude From Public Release
 
-Every row below must be absent from the published repository. Status reflects the verified state of `main` on 2026-06-18; re-run the Checks before each release.
+Every row below must be absent from the published repository or public archive. Local source workspaces may contain private extensions such as `references/` and `l3/`; `scripts/build-public-package.sh` excludes them from the default public build. Re-run the Checks before each release.
 
 | Item | Excluded via | Status |
 |------|--------------|--------|
-| `references/` | `.gitignore` (not part of public release) | [x] absent |
-| `l3/` | `.gitignore` (local private knowledge) | [x] absent |
+| `references/` | public build excludes it; private extension only | [x] absent from public archive |
+| `l3/` | public build excludes it; local private knowledge only | [x] absent from public archive |
 | `results/` | `.gitignore` (task output kept outside the package) | [x] absent |
 | `.pytest_cache/` | `.gitignore` | [x] absent from repo (local only) |
 | `__pycache__/` | `.gitignore` | [x] absent from repo (local only) |

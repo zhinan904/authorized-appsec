@@ -12,6 +12,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def write_text(path: Path, content: str):
@@ -33,6 +34,24 @@ def slugify(value: str) -> str:
     value = value.lower().replace("https://", "").replace("http://", "")
     value = re.sub(r"[^a-z0-9]+", "-", value)
     return value.strip("-")[:40] or "target"
+
+
+def normalize_host(value: str) -> str:
+    value = (value or "").strip()
+    if not value:
+        return ""
+    parsed = urlparse(value if "://" in value else f"//{value}")
+    host = parsed.hostname or value.split("/")[0].split(":")[0]
+    return host.strip("[]").lower()
+
+
+def csv_hosts(value: str) -> list[str]:
+    hosts = []
+    for raw in re.split(r"[,;\s]+", value or ""):
+        host = normalize_host(raw)
+        if host and host not in hosts:
+            hosts.append(host)
+    return hosts
 
 
 def next_seq(results_root: Path) -> int:
@@ -61,6 +80,20 @@ def main():
                         help="Target type")
     parser.add_argument("--output-dir", default=None,
                         help="Output root directory (default: $AUTHORIZED_APPSEC_RESULTS_ROOT or ~/authorized-appsec/results/)")
+    parser.add_argument("--authorized", action="store_true",
+                        help="Record that the user confirmed authorization for this target")
+    parser.add_argument("--scope", default="pending",
+                        help="Approved hosts/paths/accounts/IP ranges, or 'pending'")
+    parser.add_argument("--scope-allowlist", default="",
+                        help="Comma/space separated approved request host allowlist")
+    parser.add_argument("--intensity", default="pending",
+                        help="Passive, gentle, standard, or user-specified limits")
+    parser.add_argument("--automation", default="pending",
+                        help="Approved automation capabilities; nuclei only when explicitly requested")
+    parser.add_argument("--credentials", default="pending",
+                        help="Credential/session decision, e.g. none, supplied-test-user, pending")
+    parser.add_argument("--approved-ports", default="",
+                        help="Comma/space separated approved ports when port scope is constrained")
     args = parser.parse_args()
 
     if args.output_dir:
@@ -80,12 +113,33 @@ def main():
         (task_dir / subdir).mkdir(exist_ok=True)
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    target_host = normalize_host(args.target)
+    allowlist = csv_hosts(args.scope_allowlist)
+    if target_host and target_host not in allowlist:
+        allowlist.insert(0, target_host)
+    authorization = "confirmed" if args.authorized else "pending"
+    preflight_complete = (
+        args.authorized
+        and args.scope.strip().lower() not in {"", "pending", "unknown", "todo", "tbd"}
+        and args.intensity.strip().lower() not in {"", "pending", "unknown", "todo", "tbd"}
+        and args.automation.strip().lower() not in {"", "pending", "unknown", "todo", "tbd"}
+        and args.credentials.strip().lower() not in {"", "pending", "unknown", "todo", "tbd"}
+        and bool(allowlist)
+    )
 
     task_md = f"""# Task Meta
 
 - task_id: {dir_name}
 - target: {args.target}
 - target_type: {args.target_type}
+- preflight_complete: {str(preflight_complete).lower()}
+- authorization: {authorization}
+- scope: {args.scope}
+- scope_allowlist: {", ".join(allowlist) if allowlist else "pending"}
+- approved_ports: {args.approved_ports or "default-for-target"}
+- intensity: {args.intensity}
+- automation: {args.automation}
+- credentials: {args.credentials}
 - results_root: {results_root}
 - task_dir: {task_dir}
 - status: in_progress
@@ -101,6 +155,13 @@ def main():
 
 ## Summary
 
+- preflight:
+  - complete: {str(preflight_complete).lower()}
+  - authorization: {authorization}
+  - scope_allowlist: {", ".join(allowlist) if allowlist else "pending"}
+  - intensity: {args.intensity}
+  - automation: {args.automation}
+  - credentials: {args.credentials}
 - tech_stack: unknown
 - waf: unknown
 - finding_counts:
@@ -128,6 +189,8 @@ def main():
 - Update this file on every phase switch, new confirmed finding, task pause or resume
 - Results for this task stay under `task_dir` above unless the user explicitly requests migration.
 - Mini Program artifacts: extract backend hosts and confirm same-host Web surface (`/`, `/login`, `/admin`, feature paths) before declaring scope complete.
+- Before active probing, set `preflight_complete: true` only after authorization, scope, intensity, automation, and credentials are explicitly decided.
+- Every request host in `02-discovery.md` and `03-vuln-test.md` must be present in `scope_allowlist`.
 
 ## Tools Used
 
@@ -177,6 +240,16 @@ _No confirmed findings yet._
         "major_findings": [],
         "next_recommendations": [],
         "boundary_summary": "",
+        "preflight": {
+            "complete": preflight_complete,
+            "authorization": authorization,
+            "scope": args.scope,
+            "scope_allowlist": allowlist,
+            "approved_ports": args.approved_ports or "default-for-target",
+            "intensity": args.intensity,
+            "automation": args.automation,
+            "credentials": args.credentials,
+        },
         "report_status": "not_generated",
         "knowledge_ready": False,
         "memory_ready": False,

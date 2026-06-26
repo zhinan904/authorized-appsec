@@ -85,7 +85,7 @@ BATCH_DIR/
 |--------|-----------|
 | `not_started` | PID file initialized, no process running |
 | `running` | Main process active, tool processes may be active |
-| `paused` | Process suspended (not implemented yet) |
+| `paused` | Documented for future use; **not produced by any current script**. A stop condition surfaces a pause request to the user instead of writing this status. |
 | `terminated` | Process killed by signal |
 | `completed` | Process finished normally |
 | `failed` | Process crashed or failed |

@@ -5,7 +5,7 @@ description: Use for authorized Web, API, or application security assessment whe
 
 # Authorized AppSec Testing
 
-**Version**: 2.21.0 | **Updated: 2026-06-18**
+**Version**: 2.22.5 | **Updated: 2026-06-20**
 
 ## Purpose
 
@@ -54,9 +54,30 @@ Active testing runs inside the Kali Linux VM or an equivalent isolated execution
 | 4: Chain Analysis & Report | Analyze risk chains, generate report | `04-chain.md`, `report.md` | `chain-template.md`, `result-template.md` |
 | 5: Retest (Optional) | Verify remediation of original findings | `RETEST-{ID}/` | `retest-template.md` |
 
+### Mandatory Evidence Trail (no silent discovery)
+
+`02-discovery.md` and `03-vuln-test.md` are **required** outputs, not optional. Every Phase 1-2 discovery request and every Phase 3 validation request must be logged in them. A phase with zero logged requests is treated as "not performed" — it must never be silently skipped.
+
+- **`02-discovery.md` (Phase 1-2)**: log every request made — at minimum the target host, path, method, status, and whether the host is in-scope. This is the only auditable record of *which hosts were actually probed*. Directory brute-force (~150 paths or otherwise) with no logged requests is forbidden — if you ran the requests, they appear here.
+- **`03-vuln-test.md` (Phase 3)**: log every validation request including payloads attempted and outcome (per `vuln-test-template.md`).
+- The Scope Guard allowlist (above) is checked against these logs. Any request whose host is not in the scope allowlist is a boundary violation and must be flagged, not hidden.
+
+Manual single HTTP requests must go through `python3 scripts/request_guard.py <task_dir> <url> --phase discovery|3`. It verifies preflight/scope, blocks out-of-scope hosts/ports and out-of-scope `Host` headers before sending traffic, stores sanitized raw evidence, and appends the required request-log row. Batch tools still require their selected output files to be reflected in the same request logs.
+
 For each confirmed finding, immediately update: `findings.md` (authority), `findings.json`, `evidence-index.json`, `task.md`.
 
 Keep validation **non-destructive**: no data modification, shell execution, persistence, mass extraction, DoS, or privilege expansion.
+
+### Scope Guard (mandatory in every active phase)
+
+The preflight `scope` is a hard constraint, not a suggestion. Discovery, validation, and any active request must stay inside it. The two rules below are enforced at every phase boundary:
+
+1. **Scope allowlist check** — every host you send a request to must be ⊆ the approved scope (`target` plus any hosts the user explicitly added to `scope`). Before issuing any request, confirm the request target host is in the allowlist. Hosts that are merely *observed* (wildcard certificate SANs, sibling subdomains inferred from naming, internal hostnames leaked by actuator/error responses) are **evidence only — never request targets**. A wildcard TLS cert, an `_links` href, or an `X-Forwarded-Host` value does not add that host to scope.
+2. **Discovered-but-out-of-scope → record, do not request** — when fingerprint/discovery surfaces a host outside the allowlist (e.g. internal name `gateway-enterprise`, a sibling subdomain `api.example.com` when scope is a single host), record it in the fingerprint/discovery notes as a finding-input, then explicitly mark it out-of-scope. Never resolve, connect to, or probe it. Escalation to "test that host" always requires the user adding it to `scope` in preflight.
+
+If you cannot tell whether a discovered host is in scope, treat it as **out of scope** and ask the user rather than probing.
+
+The same guard applies to paths/ports: a request stays inside the approved `scope` host list and approved ports; do not expand to sibling hosts or new ports under the name of "deeper discovery".
 
 ### Authenticated Testing (Phase 3 Branch)
 
@@ -147,6 +168,7 @@ Batch preflight must confirm: `targets`, `scope`, `excluded`, `intensity`, `allo
 | UNION-based SQL extraction, alert-based XSS validation | Ask first |
 | Data create/update/delete (with authorization) | Ask first, test data only. Numeric IDs, sequential IDs, `admin`, `test`, or values that could plausibly collide with production records are not test data. Prefer synthetic UUID-like values containing `appsec-test` and stop after proof. |
 | File upload, RCE, reverse shell, persistence, credential theft, exfiltration, DoS, evasion | Do not execute |
+| Probing hosts discovered only via response leakage (actuator `_links` internal hostnames, error stack internal IPs, wildcard-cert sibling subdomains) | Record as evidence only. Do not resolve, connect to, or probe unless the user explicitly adds that host to `scope`. |
 
 When an action is not safe, provide a risk explanation, bounded manual validation outline, or report-ready statement.
 
@@ -171,6 +193,16 @@ This generates `capabilities.json` with available candidates per capability. See
 
 **Selection rules**: prefer JSON output → prefer rate control → try next candidate → fallback to manual.
 
+`discover-capabilities.sh` records installed template scanners but does not enumerate nuclei templates by default. Use `--include-nuclei-templates` only after the user explicitly approves scanner/nuclei use.
+
+**Missing-tool degradation (no ad-hoc mass curling)**: when a capability has zero available candidates after discovery (e.g. no `ffuf`/`gobuster`/`dirsearch` for directory scanning, no `subfinder` for subdomain discovery), do **not** compensate by hand-rolling a large list of `curl` requests. Ad-hoc batch curling has no bounded scope, no rate control, and no auditable output — it is the primary path to out-of-scope drift and silent discovery. Instead degrade explicitly:
+
+1. Run only the **passive** variant of that capability — e.g. for directory scanning, extract endpoints from JS bundles / source maps / OpenAPI / sitemap / robots.txt; for subdomain discovery, use certificate transparency / DNS records already in the fingerprint. These are read-only and stay on the target host.
+2. Mark the capability `degraded` in `coverage-checklist.md` with the reason "tool unavailable, passive-only".
+3. Record the degradation in `02-discovery.md` Notes and surface it in the report's Test Coverage & Gaps.
+
+A short, bounded manual check (a handful of known endpoints from the fingerprint) is acceptable only through `request_guard.py`; an unbounded "150-path curl list" is not. If active discovery of a capability is essential and the tool is missing, stop and ask the user — do not silently replace the tool with bulk manual requests.
+
 **Recording**: list selected tools in `task.md` under `## Tools Used`.
 
 ### Scan Resilience
@@ -190,12 +222,20 @@ If the target becomes unreachable mid-scan, wait and retry. Do not re-discover c
 
 `findings.md` is the human-readable authority. `summary.json`, `findings.json`, and `evidence-index.json` are structured projections. Severity follows `templates/severity-classification.md`.
 
+**Report output is machine-generated only.** `report.md` is produced exclusively by `generate_report.py`. Never hand-write or hand-edit a final report in free prose. Internally, `F-XXX` is the single authority; the generator renders it as the customer-facing `V-XX` (severity-descending: critical→V-01), keeping F-XXX as a small traceability note. The report is in Chinese (中文) with a fixed 6-chapter + 4-appendix structure defined in `templates/result-template.md` (漏洞汇总 / 资产画像 / 漏洞详情 / 测试过程 / 攻击链 / 加固建议 + appendices A-D).
+
+**Evidence in the report**: each confirmed finding embeds its full request/response evidence block (curl + HTTP/JSON) inline, redacted by `redact_response` — session keys, tokens, and 32+ hex values are masked to `***REDACTED***`, while test phone numbers and paths are preserved. This makes the report self-contained and persuasive for the customer. Raw artifacts still persist in `raw/` and `evidence-index.json`. A post-render gate (`check_report_redaction`) warns if any secret-like value survived redaction.
+
 ```bash
 python3 scripts/ensure_structured_outputs.py <task_dir>
 python3 scripts/generate_report.py <task_dir>
 ```
 
-**Test coverage gate**: before a report is considered done, fill `templates/coverage-checklist.md` against this task's actual testing. Every surface row must be `covered`, `degraded`, `not-covered`, or `out-of-scope` — never blank. The report's "Test Coverage & Gaps" section is generated from the `degraded` + `not-covered` rows; silent omission of untested surface is forbidden. This is what makes "was the target fully tested?" visible instead of hiding gaps behind a clean-looking report.
+**Test coverage gate**: before a report is considered done, fill `templates/coverage-checklist.md` against this task's actual testing. Every surface row must be `covered`, `degraded`, `not-covered`, or `out-of-scope` — never blank. The report's test process section (四、测试过程) is generated from the checklist's per-surface rows; `degraded` and `not-covered` rows must appear explicitly. Silent omission of untested surface is forbidden.
+
+**Scope adherence gate**: the coverage checklist's "Scope Adherence" section must also be filled — cross-check the `02-discovery.md` / `03-vuln-test.md` request logs against the scope allowlist and confirm every request target was in scope. Any boundary violation (a request to a host outside the approved scope) blocks the report until it is disclosed to the user. A report that skipped Phase 1-2 logging (no `02-discovery.md` request log) cannot pass this gate — the requests must be logged first.
+
+The report gate also machine-checks `task.md` preflight fields (`preflight_complete`, `authorization`, `scope`, `scope_allowlist`, `intensity`, `automation`, `credentials`) and request-log hosts. `scope_allowlist` is the machine allowlist; free-form `scope` text does not expand it. `--skip-gate` requires `--gate-override-reason` and must be used only for non-live imports or explicit fixture/debug cases.
 
 For historical reports, import first:
 
@@ -230,6 +270,7 @@ Load **only the file needed for the current phase**:
 | HTTP/2 single-packet race condition | `payloads/http2-single-packet.md` |
 | WAF / CDN origin IP discovery | `payloads/waf-origin-discovery.md` |
 | Evidence capture with hash chain | `scripts/capture_evidence.py` |
+| Scope-checked request wrapper | `scripts/request_guard.py` |
 | Cleanup and rollback protocol | `templates/cleanup-template.md` |
 | Phase 0 output format | `templates/fingerprint-template.md` |
 | Phase 1-2 output format | `templates/discovery-template.md` |

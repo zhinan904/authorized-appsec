@@ -59,30 +59,34 @@ Required:
 
 ## report.md Fixed Structure
 
+> **Language**: The customer report is in Chinese (中文). Section titles, table
+> headers, severity labels, and field names are Chinese; internal data fields
+> in JSON stay English. Internal `F-XXX` finding IDs are rendered as
+> customer-facing `V-XX` (severity-descending), with F-XXX kept as a small
+> note for traceability.
+
+> **Evidence**: Each confirmed finding embeds the full request/response
+> evidence block (curl + HTTP/JSON) inline, redacted by `redact_response`
+> (session keys / tokens / 32+ hex masked to `***REDACTED***`). This is a
+> deliberate departure from the older "evidence stays only in raw/" rule — the
+> customer report must be self-contained and persuasive. Raw artifacts still
+> persist in `raw/` and `evidence-index.json` for audit.
+
 ```markdown
-# Authorized AppSec Assessment Report - {target}
+# 渗透测试报告
 
-**Task ID**: {summary.task_id}
-**Test Time**: {summary.started_at} ~ {summary.ended_at}
-**Status**: {summary.phase_status}
+**PT编号** / **目标** / **测试时间** / **测试范围** / **授权状态** / **测试方法**
 
-## 1. Task Overview
-
-## 2. Test Boundaries
-
-## 3. Key Findings Summary
-
-## 4. Vulnerability Details
-
-## 5. Target Fingerprint & Environment
-
-## 6. Evidence Index
-
-## 7. Remediation Priority & Next Recommendations
-
-## 8. Test Coverage & Gaps
-
-## Appendix (Optional)
+## 一、漏洞汇总              ← V-XX编号 + 中文等级 + CVSS估分 + 状态
+## 二、被测系统资产画像        ← 2.1-2.8 八子节(基本信息/技术栈/部署/认证/组件/模块/数据流/外连)
+## 三、漏洞详情              ← V-XX + 完整证据块(脱敏) + 清理状态/影响/修复
+## 四、测试过程              ← coverage-checklist 逐项(已覆盖/受限/未覆盖)
+## 五、攻击链               ← 04-chain.md 的 AP-XXX 链(F-XXX→V-XX映射)
+## 六、安全加固建议           ← 高优先级(14天)/中优先级(30天)/持续改进
+## 附录 A: API端点统计       ← 02-discovery.md 端点计数
+## 附录 B: WAF行为分析       ← 01-fingerprint.md WAF段
+## 附录 C: 测试限制说明       ← summary.json report_meta.test_limitations
+## 附录 D: 安全测试标准参考   ← severity-classification.md 定级表
 ```
 
 ---

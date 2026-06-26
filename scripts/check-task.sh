@@ -23,7 +23,9 @@ fi
 RAW_DIR="${TASK_DIR}/raw"
 TARGET=""
 if [[ -f "${TASK_DIR}/task.md" ]]; then
-  TARGET=$(grep -E '^target:' "${TASK_DIR}/task.md" | head -1 | sed -E 's/^target:[[:space:]]+//' | tr -d '[:space:]' || true)
+  # task.md uses YAML-style "- target: ..." in the Task Meta section;
+  # also accept bare "target:" for compatibility.
+  TARGET=$(grep -E '^[[:space:]]*[-[:space:]]*target:' "${TASK_DIR}/task.md" | head -1 | sed -E 's/^[[:space:]]*[-[:space:]]*target:[[:space:]]+//' | tr -d '[:space:]' || true)
 fi
 
 failures=0

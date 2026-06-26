@@ -79,6 +79,7 @@ echo ""
 echo "[4/7] Checking scripts..."
 required_scripts=(
   "scripts/discover-capabilities.sh"
+  "scripts/request_guard.py"
   "scripts/ensure_structured_outputs.py"
   "scripts/generate_report.py"
   "scripts/auto_l3_hypotheses.py"
@@ -170,7 +171,7 @@ done
 # 6. Check payload files (warning level)
 echo ""
 echo "[6/7] Checking payload library..."
-payload_count=$(find payloads -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+payload_count=$(find payloads -maxdepth 1 -name "*.md" ! -name "._*" 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$payload_count" -eq 0 ]]; then
   echo -e "  ${YELLOW}!${NC} No payload files in payloads/"
   ((warnings++)) || true
@@ -270,7 +271,7 @@ else
   fi
 
   # Check if all payload files have security boundary statement
-  no_boundary=$(find payloads -name "*.md" -exec grep -L "Security Boundary Statement\|Validation Objectives" {} \; 2>/dev/null || true)
+  no_boundary=$(find payloads -name "*.md" ! -name "._*" -exec grep -L "Security Boundary Statement\|Validation Objectives" {} \; 2>/dev/null || true)
   if [[ -n "$no_boundary" ]]; then
     no_boundary_count=$(echo "$no_boundary" | wc -l)
     echo -e "    ${YELLOW}!${NC} $no_boundary_count payload files missing boundary statement"

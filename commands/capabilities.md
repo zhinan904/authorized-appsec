@@ -9,7 +9,8 @@ This document defines capabilities, not tools. The skill discovers available too
 Before using any capability, discover available tools inside the VM and write the result into the active task directory:
 
 ```bash
-# Run inside the Kali VM or equivalent execution VM
+# Run inside the Kali VM or equivalent execution VM.
+# Add --include-nuclei-templates only after explicit scanner/nuclei approval.
 ./scripts/discover-capabilities.sh <task_dir>/capabilities.json
 ```
 
@@ -539,10 +540,10 @@ If no tool available:
 
 | Capability | Manual Alternative |
 |------------|-------------------|
-| subdomain-discovery | Certificate transparency logs, DNS brute via dig |
+| subdomain-discovery | Passive certificate transparency / already observed DNS records only |
 | http-probing | curl/wget with manual parsing |
-| port-scanning | nc/netcat manual probe |
-| directory-scanning | curl with manual wordlist iteration |
+| port-scanning | Short approved-port manual probe only |
+| directory-scanning | Passive endpoint extraction from JS/sitemap/robots/OpenAPI; at most a handful of known endpoints |
 | url-extraction | grep/regex on HTML/JS source |
 | fingerprinting | HTTP header + HTML pattern analysis |
 | vulnerability-scanning | Manual payload testing from payloads/ |
@@ -568,7 +569,8 @@ If no tool available:
       "binary_paths": ["/usr/bin/subfinder", "/usr/bin/amass"],
       "selected": "subfinder",
       "selected_path": "/usr/bin/subfinder",
-      "requires_explicit_approval": false
+      "requires_explicit_approval": true,
+      "approval_reason": "Subdomain discovery expands host coverage and requires explicit scope approval"
     },
     "http-probing": {
       "candidates": ["httpx"],
@@ -576,7 +578,9 @@ If no tool available:
     },
     "port-scanning": {
       "candidates": [],
-      "selected": null
+      "selected": null,
+      "requires_explicit_approval": true,
+      "approval_reason": "Port scanning requires explicit port/rate approval before invocation"
     },
     "vulnerability-scanning": {
       "candidates": ["nuclei"],
@@ -594,5 +598,5 @@ If no tool available:
 Field notes:
 
 - `binary_paths` / `selected_path`: absolute paths to the discovered binaries, for direct invocation.
-- `requires_explicit_approval` + `approval_reason`: present on `vulnerability-scanning`, `brute-force`, `oob-callback`, and `k8s-client`. `"available"` does **not** mean `"may run"` — these capabilities still need explicit user opt-in per their policy.
-- `nuclei_templates`: sample of available nuclei template names (empty when nuclei is not installed or not requested). Listed for awareness only; it never authorizes running nuclei.
+- `requires_explicit_approval` + `approval_reason`: present on active expansion or higher-risk capabilities including `subdomain-discovery`, `port-scanning`, `directory-scanning`, `vulnerability-scanning`, `brute-force`, `oob-callback`, and `k8s-client`. `"available"` does **not** mean `"may run"` — these capabilities still need explicit user opt-in per their policy.
+- `nuclei_templates`: empty by default. It is populated only when `discover-capabilities.sh --include-nuclei-templates` is run after explicit scanner approval; listing templates never authorizes scanning a target.

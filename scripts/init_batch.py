@@ -258,12 +258,11 @@ def main():
     if batch_mode == "discovery-first":
         (batch_dir / "discovery").mkdir(exist_ok=True)
 
-    # Create shared task before slices so single-batch-task follows the documented layout.
-    create_shared_task(batch_dir)
-
-    # Create target directories (skip per-target dirs for single-batch-task)
+    # shared-task is the execution entry ONLY for single-batch-task mode.
+    # For one-task-per-target and discovery-first, per-target dirs are the entry
+    # points — creating a shared-task there confuses which directory to execute in.
     if batch_mode == "single-batch-task":
-        # single-batch-task: shared-task only, targets get slice files not full dirs
+        create_shared_task(batch_dir)
         for idx, target in enumerate(targets, 1):
             slug = slugify(target["target"])
             slice_file = batch_dir / "shared-task" / "slices" / f"{target['target_id']}-{slug}.md"
@@ -276,6 +275,7 @@ def main():
                 encoding="utf-8",
             )
     else:
+        # one-task-per-target / discovery-first: each target gets its own task dir
         for idx, target in enumerate(targets, 1):
             create_target_dir(batch_dir, target, idx)
 

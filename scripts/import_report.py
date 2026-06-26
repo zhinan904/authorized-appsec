@@ -440,9 +440,10 @@ def create_task_dir(results_root: Path, source_path: Path, target: str) -> Path:
     return task_dir
 
 
-def run_helper(script_name: str, task_dir: Path) -> tuple[bool, str]:
+def run_helper(script_name: str, task_dir: Path, extra_args: list[str] | None = None) -> tuple[bool, str]:
     script = Path(__file__).resolve().parent / script_name
-    result = subprocess.run([sys.executable, str(script), str(task_dir)], capture_output=True, text=True, check=False)
+    cmd = [sys.executable, str(script), str(task_dir)] + (extra_args or [])
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     detail = (result.stdout or result.stderr or "").strip()
     return result.returncode == 0, detail
 
@@ -527,7 +528,18 @@ def import_report(source_path: Path, target: str = "", output_dir: Path | None =
     if not ok:
         print(f"structured-output-warning: {detail}", file=sys.stderr)
     if generate_report:
-        ok, detail = run_helper("generate_report.py", task_dir)
+        # Imported reports are pre-existing artifacts that never went through
+        # the Phase 1-3 evidence trail, so the report gate (02/03/coverage
+        # presence) does not apply to them.
+        ok, detail = run_helper(
+            "generate_report.py",
+            task_dir,
+            extra_args=[
+                "--skip-gate",
+                "--gate-override-reason",
+                "legacy report import: no live Phase 1-3 request trail was executed",
+            ],
+        )
         if not ok:
             print(f"report-warning: {detail}", file=sys.stderr)
     return task_dir

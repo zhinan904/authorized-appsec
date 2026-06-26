@@ -4,7 +4,7 @@
 # Output: capabilities.json with full binary paths for direct invocation.
 #
 # Usage:
-#   ./scripts/discover-capabilities.sh [output.json] [--mcp http://host:port]
+#   ./scripts/discover-capabilities.sh [output.json] [--mcp http://host:port] [--include-nuclei-templates]
 #
 # Dependencies: jq (JSON processor)
 
@@ -20,14 +20,18 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-OUTPUT_FILE="${1:-./capabilities.json}"
-shift 2>/dev/null || true
-
+OUTPUT_FILE="./capabilities.json"
 MCP_URL=""
+INCLUDE_NUCLEI_TEMPLATES=0
+if [[ $# -gt 0 && "${1:-}" != --* ]]; then
+  OUTPUT_FILE="$1"
+  shift
+fi
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --mcp) MCP_URL="$2"; shift 2 ;;
     --mcp=*) MCP_URL="${1#--mcp=}"; shift ;;
+    --include-nuclei-templates|--list-nuclei-templates) INCLUDE_NUCLEI_TEMPLATES=1; shift ;;
     *) shift ;;
   esac
 done
@@ -75,6 +79,17 @@ resolve_candidates() {
       continue
     fi
 
+    # Reject system binaries that merely share a name with a security tool.
+    # macOS ships unrelated tools (e.g. /usr/sbin/spray = NFS) in system dirs;
+    # a real AppSec tool does not live in these paths. This prevents
+    # discover-capabilities from reporting a phantom capability.
+    case "$bin_path" in
+      /usr/sbin/*|/sbin/*|/usr/libexec/*|/System/*)
+        echo "  [~] $cap_name: $tool resolves to a system binary ($bin_path), likely a name collision, skipping" >&2
+        continue
+        ;;
+    esac
+
     echo "  [+] $cap_name: $tool → $bin_path" >&2
     printf '%s\n' "$tool|$bin_path"
   done <<< "$(echo "$candidates" | tr ' ' '\n')"
@@ -105,7 +120,7 @@ CAPABILITIES=(
   "subdomain-discovery:subfinder amass findomain assetfinder"
   "http-probing:httpx httprobe httpcat"
   "port-scanning:naabu nmap masscan rustscan"
-  "directory-scanning:spray ffuf dirsearch feroxbuster gobuster"
+  "directory-scanning:ffuf dirsearch feroxbuster gobuster"
   "url-extraction:URLFinder gau getallurls waymore katana waybackurls"
   "fingerprinting:Ehole wappalyzer whatweb builtwith"
   "vulnerability-scanning:nuclei nikto wpscan"
@@ -122,6 +137,9 @@ CAPABILITIES=(
 # "available" in capabilities.json does NOT mean "may run" — these need opt-in.
 opt_in_reason() {
   case "$1" in
+    subdomain-discovery)   echo "Subdomain discovery expands host coverage and requires explicit scope approval" ;;
+    port-scanning)         echo "Port scanning requires explicit port/rate approval before invocation" ;;
+    directory-scanning)    echo "Directory/file brute-force requires explicit path/rate approval before invocation" ;;
     vulnerability-scanning) echo "Template-based scanners (nuclei/nikto/wpscan) run only on explicit user request per SKILL.md Nuclei Policy" ;;
     brute-force)            echo "Credential brute-force requires explicit authorization and test accounts" ;;
     oob-callback)           echo "Out-of-band interaction (OOB) channels require explicit authorization" ;;
@@ -288,22 +306,26 @@ json_base=$(echo "$json_base" | jq --argjson wl "$wordlists_json" '.wordlists = 
 nuclei_templates="[]"
 if command -v nuclei >/dev/null 2>&1; then
   echo ""
-  echo "# Nuclei templates available:"
-  # Template counts by directory for coverage awareness
-  for tdir in /root/nuclei-templates/http /root/nuclei-templates/cnvd /root/nuclei-templates/cve /root/nuclei-templates/exposures /root/nuclei-templates/misconfiguration /root/nuclei-templates/technologies /root/nuclei-templates/default-logins; do
-    if [[ -d "$tdir" ]]; then
-      cnt=$(find "$tdir" -name "*.yaml" -type f 2>/dev/null | wc -l)
-      echo "  [+] $(basename "$tdir"): ${cnt} templates"
+  if [[ "$INCLUDE_NUCLEI_TEMPLATES" -eq 1 ]]; then
+    echo "# Nuclei templates available (explicitly requested):"
+    # Template counts by directory for coverage awareness
+    for tdir in /root/nuclei-templates/http /root/nuclei-templates/cnvd /root/nuclei-templates/cve /root/nuclei-templates/exposures /root/nuclei-templates/misconfiguration /root/nuclei-templates/technologies /root/nuclei-templates/default-logins; do
+      if [[ -d "$tdir" ]]; then
+        cnt=$(find "$tdir" -name "*.yaml" -type f 2>/dev/null | wc -l)
+        echo "  [+] $(basename "$tdir"): ${cnt} templates"
+      fi
+    done
+    # First 10 template paths as sample
+    templates=$(nuclei -tl 2>/dev/null | head -10 || true)
+    if [[ -n "$templates" ]]; then
+      while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        echo "  [+] $t"
+        nuclei_templates=$(echo "$nuclei_templates" | jq --arg t "$t" '. + [$t]')
+      done <<< "$templates"
     fi
-  done
-  # First 10 template paths as sample
-  templates=$(nuclei -tl 2>/dev/null | head -10 || true)
-  if [[ -n "$templates" ]]; then
-    while IFS= read -r t; do
-      [[ -z "$t" ]] && continue
-      echo "  [+] $t"
-      nuclei_templates=$(echo "$nuclei_templates" | jq --arg t "$t" '. + [$t]')
-    done <<< "$templates"
+  else
+    echo "# Nuclei templates: installed but not enumerated (use --include-nuclei-templates only after explicit scanner approval)"
   fi
 fi
 json_base=$(echo "$json_base" | jq --argjson nt "$nuclei_templates" '.nuclei_templates = $nt')

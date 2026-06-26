@@ -88,6 +88,8 @@ curl -s -I -H "Origin: https://anything.example.com" https://api.example.com/end
 # Risk: Exploitable if subdomain takeover exists
 ```
 
+**Important — separate legitimate own-domain from attacker-controllable.** Reflection of the target org's own real subdomains (`www.example.com`, `m.example.com` that the org legitimately owns) is usually intended config and is **not** a CORS flaw on its own. To prove the vulnerability you must show an **attacker-controllable** origin is accepted — i.e. an unrelated domain, `null`, or a pre-domain suffix like `<target>.attacker.com`. Use the attacker-controllable result as the evidence; treat legitimate own-domain reflection as a contrast/baseline, not as the finding.
+
 ---
 
 ## CORS Bypass Techniques
@@ -140,9 +142,9 @@ curl -s -I -H "Origin: http://example.com" https://api.example.com/endpoint
 
 ## Severity Classification
 
-CORS Severity is based on**whether the exploit chain is closed**is authoritative, not a mechanical severity score based on configuration type. 
+CORS severity is based on **whether the exploit chain is closed** — this is authoritative, not a mechanical severity score based on configuration type.
 
-Default CORS misconfigurations are **Low**. Only when the following five conditions are **all met**, then upgrade to **High**:
+Default CORS misconfigurations are **Low**. Only when the following five conditions are **all met**, upgrade to **High**:
 
 1. Origin reflects arbitrary origins / allows null / regex can be bypassed
 2. `Access-Control-Allow-Credentials: true`
@@ -150,16 +152,28 @@ Default CORS misconfigurations are **Low**. Only when the following five conditi
 4. there is an authenticated endpoint returning sensitive data (profile data/keys/orders/PII, etc.)
 5. actual request can pass preflight (OPTIONS does not block, or it is a simple request requiring no preflight)
 
-if any one condition is unmet -> keep Low, and state in the findingchain-break point (for example, "authentication uses a frontend token header, chain breaks at condition 3"). 
+If any one condition is unmet -> keep Low, and state in the finding the chain-break point (for example, "authentication uses a frontend token header, chain breaks at condition 3").
 
-| configuration type | Default | Only when 5 conditionsall met |
+### Distinguish attacker-controllable origins from legitimate own-domain origins
+
+A critical classification step that is easy to get wrong: **not every reflected Origin is a vulnerability**. Separate the Origin test results into two buckets before assessing severity:
+
+| Bucket | Examples | Counts as a vulnerability? |
+|--------|----------|----------------------------|
+| **Attacker-controllable** | `<target>.attacker.com` (pre-domain suffix), arbitrary unrelated domains, `null`, attacker-registered subdomain via takeover | **Yes** — these prove the `endsWith`/regex flaw. This is the real evidence. |
+| **Legitimate own-domain** | the target org's own real subdomains (`www.example.com`, `m.example.com` when the org owns `example.com`) | **No, on its own.** Reflecting an org's own legitimate frontend subdomain is often intended cross-domain config, not a flaw. Do not use it as the primary evidence for a CORS finding. |
+
+Rule: the finding must rest on **attacker-controllable** origin reflection (bucket 1). Reflecting a legitimate own-domain subdomain alone does not establish a CORS vulnerability — at most it shows the server recognizes its own domains. Mixing legitimate own-domain reflection into the evidence inflates severity and produces false positives.
+
+| configuration type | Default | Only when 5 conditions all met |
 |---------|------|------------------|
-| Origin reflected + credentials | Low | -> High |
+| Origin reflected (attacker-controllable) + credentials | Low | -> High |
 | Null origin allowed | Low | -> High |
 | Pre-domain regex bypass | Low | -> High |
-| Subdomain wildcard | Low | -> Medium (also requires a subdomain takeover prerequisite)|
-| Wildcard without credentials | Low | Low (no credentials, no escalation path)|
-| Wildcard with credentials | Invalid | Invalid (browser blocks it)|
+| Subdomain wildcard accepting attacker-registered subdomains | Low | -> Medium (also requires a subdomain takeover prerequisite) |
+| Legitimate own-domain subdomain reflected only | Info | Info (intended config, not a flaw) |
+| Wildcard without credentials | Low | Low (no credentials, no escalation path) |
+| Wildcard with credentials | Invalid | Invalid (browser blocks it) |
 
 ---
 

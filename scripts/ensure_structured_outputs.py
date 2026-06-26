@@ -946,6 +946,20 @@ def parse_findings_md(text: str, task_meta: dict = None) -> list[dict]:
             severity = findings_table.get(finding_id, {}).get("severity", severity)
         description = clean_inline(extract_field(chunk, "Description"))
         affected = extract_field(chunk, "Affected")
+
+        # Skip unfilled template placeholders (e.g. from init_task.py's default
+        # findings.md). An untouched placeholder has a literal "[Title]" heading
+        # and empty Description/Affected/Evidence, or the multi-option Status
+        # "confirmed / suspicious / false_positive". Parsing these as real
+        # findings pollutes findings.json, evidence-index.json, and the report.
+        status_raw = clean_inline(extract_field(chunk, "Status"))
+        is_placeholder = (
+            title in {"[Title]", "[title]", "Title"}
+            or (description == "" and affected == "" and title in {"[Title]", "[title]"})
+            or (status_raw and "/" in status_raw and "confirmed" in status_raw and "suspicious" in status_raw)
+        )
+        if is_placeholder:
+            continue
         source_phase = extract_field(chunk, "Source Phase")
         remediation = extract_field(chunk, "Remediation")
         discovered_at = extract_field(chunk, "Discovered At")
@@ -965,7 +979,10 @@ def parse_findings_md(text: str, task_meta: dict = None) -> list[dict]:
         elif "confirmed" in status_text:
             status = "confirmed"
         else:
-            status = "confirmed"
+            # Unknown / missing status must NOT default to "confirmed" — that would
+            # turn unconfirmed, half-written, or format-drifted entries into confirmed
+            # findings. Default to "suspicious" (needs review) instead.
+            status = "suspicious"
         remediation_items = split_numbered_items(remediation)
         category = infer_category(title)
         evidence_summary = summarize_evidence(evidence_text) or title

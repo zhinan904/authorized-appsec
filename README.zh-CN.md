@@ -36,7 +36,7 @@ authorized-appsec/
 │   └── authenticated-testing.md  # Phase 3 鉴权测试分支
 ├── payloads/                 # 55 个漏洞 payload 文件（安全层，流程内）
 ├── templates/                # 23 个输出模板（含覆盖核对表）
-└── scripts/                  # 19 个自动化脚本
+└── scripts/                  # 20 个自动化脚本
 ```
 
 公开版本不包含 `references/`、`l3/`、历史任务结果、原始证据、截图、HAR/PCAP/Burp 文件或真实报告。`references/` 和 `l3/` 仅作为本地私有扩展存在。
@@ -56,10 +56,16 @@ python3 scripts/init_task.py https://example.com --type url
 # 在 Kali VM 内发现可用工具，并写入当前任务目录
 bash scripts/discover-capabilities.sh <task_dir>/capabilities.json
 
+# 手工发起单个 HTTP 请求时，使用带范围校验和自动日志的 wrapper
+python3 scripts/request_guard.py <task_dir> https://example.com/login --phase discovery
+python3 scripts/request_guard.py <task_dir> https://example.com/api/search --phase 3 --method POST --idempotent-post --body '{"q":"appsec-test"}'
+
 # 生成结构化输出和报告
 python3 scripts/ensure_structured_outputs.py <task_dir>
 python3 scripts/generate_report.py <task_dir>
 ```
+
+手工单个 HTTP 请求必须使用这个 wrapper。`request_guard.py` 会在发请求前校验 preflight、`scope_allowlist`、批准端口和受控 `Host` 头，将脱敏后的原始证据写入 `raw/`，并自动追加 `02-discovery.md` 或 `03-vuln-test.md` 的必需请求日志。`approved_ports` 缺失或为 `default-for-target` 时，按目标 URL 的默认/显式端口执行约束。
 
 详见 [`README.md`](./README.md)（英文）。
 
