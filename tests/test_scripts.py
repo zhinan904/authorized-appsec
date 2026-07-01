@@ -1605,6 +1605,11 @@ class TestReportGateParsing:
             "| Method | Host | Path | Status |\n"
             "|---|---|---|---|\n"
             "| GET | example.com | /login | 200 |\n"
+            "\n## Test Queue\n"
+            "### P0 Queue (High Priority)\n"
+            "| Item | Vulnerability Class | Endpoint | Status |\n"
+            "|------|--------------------|----------|--------|\n"
+            "| 1 | auth bypass | /login | validated |\n"
         )
         (task_dir / "03-vuln-test.md").write_text(
             "## Test #1: XSS\n"

@@ -51,6 +51,8 @@ List the hosts approved in preflight `scope`. Every request in this phase must t
 
 Every active request issued in Phase 1-2 is logged here. A discovery phase with zero rows means no discovery was performed. This is the auditable proof of *which hosts were actually probed* and the basis for the Scope Guard check.
 
+**This log is also where business-flow traversal shows up.** Walking each role's complete flow (register → login → checkout → refund → password-reset, etc.) emits interaction-triggered API calls that JS extraction cannot see. Drive those steps through `request_guard.py` so the calls land here — requests from ≥2 distinct role sessions in this log are the evidence that Layer 2 discovery ran. A log containing only anonymous/static-page requests indicates single-method discovery and will trigger a coverage warning.
+
 Manual single requests must use `python3 scripts/request_guard.py <task_dir> <url> --phase discovery`; it writes this row and stores sanitized raw evidence automatically.
 
 | # | Method | Host (requested) | Path | Status | In Scope? | Tool | Notes |
@@ -178,6 +180,13 @@ Hidden parameters found by fuzzing known endpoints — not present in JS/API ext
 > or `deferred` **with a reason**). `check_completeness.py` enforces this; an open
 > `pending`/`in_progress` item blocks the report. If you discover new endpoints
 > mid-Phase-3, add them here first.
+>
+> **This section is mandatory — do not omit it.** `check_completeness.py` (Gate 0)
+> fails the task if the Test Queue section is missing or contains zero items. An
+> absent queue leaves Gate A with "nothing to drain" and would otherwise let an
+> untested task pass trivially. Build a P0/P1/P2 queue for the endpoints you
+> discovered in the Endpoints Catalog; a queue that covers only a tiny fraction
+> of discovered endpoints triggers a warning.
 
 ### P0 Queue (High Priority)
 

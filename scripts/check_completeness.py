@@ -4,13 +4,21 @@
 This is the *anti-skip* gate. The report gate (check_report_gate in
 generate_report.py) only checks that coverage-checklist.md has no blank rows —
 which an agent can trivially satisfy by marking untested surface `not-covered`
-with any reason. This script closes that loophole with two machine-checked
-hard gates that must both pass before Phase 3 is allowed to end:
+with any reason. This script closes that loophole with three machine-checked
+gates that must all pass before Phase 3 is allowed to end:
+
+  Gate 0 — Queue exists & adequate (anti-skip-by-omission)
+      Gate A only checks items *in* the queue, so an agent that never builds a
+      Test Queue section has "nothing to drain" and passes trivially. Gate 0
+      closes that: 02-discovery.md MUST contain a Test Queue section with at
+      least one recognizable queue item (hard fail if missing/empty), and the
+      queue SHOULD cover a reasonable fraction of discovered endpoints (warn if
+      < 30% — many targets have homogeneous endpoints, so this is advisory).
 
   Gate A — Queue drained
       Every item in the 02-discovery.md Test Queue (P0/P1/P2) and every row in
       the "Authenticated Surface Seeds" table must reach a terminal status:
-      validated / confirmed / false_positive / not_applicable / deferred.
+      validated / confirmed / false_positive / deferred.
       `deferred` must carry a reason, otherwise it is treated as still open.
       Items left at pending / in_progress / blank fail the gate.
 
@@ -177,16 +185,19 @@ def _split_queue_status(cell: str) -> tuple[str, str]:
     return status, reason
 
 
-def check_queue_drained(disc_text: str) -> tuple[list[str], list[str]]:
-    """Gate A. Return (open_items, info_items).
+def check_queue_drained(disc_text: str) -> tuple[list[str], list[str], int]:
+    """Gate A. Return (open_items, info_items, total_count).
 
     open_items is a list of human-readable strings describing queue items that
     have not reached a terminal status. An empty list means the queue drained.
+    total_count is the number of recognized queue/seed items (any status), used
+    by Gate 0 to judge whether a queue was built at all.
     """
     open_items: list[str] = []
+    total_count = 0
 
     if not disc_text:
-        return open_items, ["02-discovery.md missing — queue cannot be checked"]
+        return open_items, ["02-discovery.md missing — queue cannot be checked"], 0
 
     # Section tracking by heading level. The Test Queue region is opened by a
     # heading containing "test queue" (any level) and closed by the next
@@ -235,6 +246,7 @@ def check_queue_drained(disc_text: str) -> tuple[list[str], list[str]]:
         if status not in TERMINAL_STATUSES and status not in OPEN_STATUSES:
             # Unknown token — could be a header or non-status cell; skip.
             continue
+        total_count += 1
 
         # Identify the item for a readable message.
         if section == "queue":
@@ -261,7 +273,222 @@ def check_queue_drained(disc_text: str) -> tuple[list[str], list[str]]:
             "confirm it, mark false_positive, or defer WITH a reason before finishing"
         )
 
-    return open_items, []
+    return open_items, [], total_count
+
+
+# --- Gate 0: queue adequacy (anti-skip-by-omission) ------------------------
+
+# Minimum (queue items) / (endpoints discovered) ratio. Below this the queue is
+# suspected of being a stub/skeleton built to look complete. WARN only — many
+# real targets have large numbers of homogeneous endpoints (e.g. a dozen CRUD
+# variants of the same resource), so a hard fail here would over-fire. The hard
+# fail is reserved for the case where NO queue was built at all.
+MIN_QUEUE_TO_ENDPOINT_RATIO = 0.3
+
+
+def _queue_section_present(disc_text: str) -> bool:
+    """True if a Test Queue section heading exists anywhere in the discovery doc.
+
+    Mirrors the heading predicate used by check_queue_drained so the two never
+    disagree on what counts as the queue section.
+    """
+    for line in (disc_text or "").splitlines():
+        m = re.match(r"^(#{1,6})\s+(.*)$", line.strip())
+        if m:
+            title = m.group(2).lower()
+            if "test queue" in title or re.search(r"\bp[012]\s+queue\b", title):
+                return True
+    return False
+
+
+def count_endpoints_in_catalog(disc_text: str) -> int:
+    """Count endpoint rows inside the 'Endpoints Catalog' section only.
+
+    Unlike build_appendix_api_stats (which scans the whole doc and would also
+    count directory-scan hits like ``| /admin | 403 |``), this restricts to the
+    Endpoints Catalog region and counts table data rows whose first cell looks
+    like an endpoint. Accepts both absolute paths (``/api/users``) and bare
+    script names some agents write (``login.php``). Header/separator rows are
+    already filtered by gr._parse_table_row.
+    """
+    if not disc_text:
+        return 0
+    in_catalog = False
+    catalog_level = 0
+    count = 0
+    for line in disc_text.splitlines():
+        m = re.match(r"^(#{1,6})\s+(.*)$", line.strip())
+        if m:
+            level = len(m.group(1))
+            title = m.group(2).lower()
+            if "endpoints catalog" in title:
+                in_catalog, catalog_level = True, level
+            elif in_catalog and level <= catalog_level:
+                # same/higher heading closes the catalog region
+                in_catalog = False
+            continue
+        if not in_catalog:
+            continue
+        cells = gr._parse_table_row(line.strip())
+        if not cells:
+            continue
+        first = cells[0].strip().lower()
+        if (
+            first.startswith("/")
+            or first.startswith("http://")
+            or first.startswith("https://")
+            # bare script/file names some agents record (login.php, users.json)
+            or re.search(r"\.(php|asp|aspx|jsp|jspx|do|action|html|htm|json|xml|cgi)(\?|$|\s)", first)
+        ):
+            count += 1
+    return count
+
+
+def _count_discovery_methods(disc_text: str) -> tuple[int, list[str]]:
+    """Detect which attack-surface discovery methods left evidence in 02-discovery.md.
+
+    Returns (count, names). Used by Gate 0 to warn when only one method was
+    used — relying on a single method (typically JS extraction) is the primary
+    cause of missed endpoints, because interaction-triggered endpoints are
+    invisible to static analysis alone. The signals are deliberately coarse and
+    conservative: we look for chapter/section markers each method produces, not
+    an exact accounting.
+
+    Method A — static extraction: an Endpoints Catalog with ≥1 endpoint.
+    Method B — dictionary brute-force: a non-empty "Directory Scanning" /
+               "Content Discovery" / "Fuzzing" section.
+    Method C — runtime/business-flow: multi-role session traces in the Request
+               Log, OR a non-empty Authenticated Surface Seeds section.
+    Method D — historical/associative: a section mentioning robots/sitemap/
+               swagger/openapi/.well-known/source-map. (Best-effort; not every
+               task records this, so it only adds to the count, never gates.)
+    """
+    if not disc_text:
+        return 0, []
+    low = disc_text.lower()
+    names: list[str] = []
+
+    # Method A — static extraction (Endpoints Catalog populated).
+    if count_endpoints_in_catalog(disc_text) > 0:
+        names.append("static extraction (Endpoints Catalog)")
+
+    # Method B — directory/content brute-force section present and non-trivial.
+    # Look for the section heading, then check it has at least one data row.
+    has_brute = False
+    in_section = False
+    for line in disc_text.splitlines():
+        m = re.match(r"^(#{1,6})\s+(.*)$", line.strip())
+        if m:
+            title = m.group(2).lower()
+            in_section = any(
+                kw in title
+                for kw in ("directory scanning", "content discovery", "fuzzing", "brute")
+            )
+            continue
+        if in_section:
+            cells = gr._parse_table_row(line.strip())
+            if cells:  # any table row under the section counts as evidence
+                has_brute = True
+                break
+    if has_brute:
+        names.append("directory/content brute-force")
+
+    # Method C — runtime traffic / business-flow traversal: multi-role session
+    # traces in the Request Log, or a populated Authenticated Surface Seeds.
+    role_tokens = ("anonymous", "session", "user a", "user b", "user-a", "user-b",
+                   "merchant", "admin", "low-priv", "high-priv", "tenant")
+    role_hits = sum(1 for t in role_tokens if t in low)
+    has_surface_seeds = re.search(r"authenticated surface seeds", low) and any(
+        gr._parse_table_row(l.strip())
+        for l in disc_text.splitlines()
+    )
+    # Heuristic: ≥2 distinct role tokens, or surface-seeds rows, indicate
+    # flows were actually walked rather than a single anonymous crawl.
+    if role_hits >= 2 or has_surface_seeds:
+        names.append("runtime traffic / business-flow traversal")
+
+    # Method D — historical/associative (additive only, never the deciding method).
+    if any(kw in low for kw in ("robots.txt", "sitemap", "swagger", "openapi",
+                                  ".well-known", "source map", "source-map", ".js.map")):
+        names.append("historical/associative")
+
+    return len(names), names
+
+
+def check_queue_adequacy(
+    disc_text: str, total_queue_items: int
+) -> tuple[list[str], list[str]]:
+    """Gate 0. Return (failures, warnings).
+
+    The anti-skip gate that Gate A cannot catch on its own: Gate A only checks
+    that items *in* the queue drained, so an agent that simply never builds a
+    Test Queue section has "nothing to drain" and passes trivially. This gate
+    rejects that omission.
+
+    - Hard fail: no Test Queue section heading at all, OR zero recognized queue
+      items (Test Queue + Authenticated Surface Seeds combined).
+    - Warn (non-blocking): queue covers < MIN_QUEUE_TO_ENDPOINT_RATIO of the
+      endpoints discovered — likely a stub/skeleton queue. Many real targets
+      have homogeneous endpoints, so this is advisory, not a hard gate.
+    """
+    failures: list[str] = []
+    warnings: list[str] = []
+
+    if not disc_text:
+        # The missing-file case is already recorded as a hard failure by the
+        # orchestrator; nothing for Gate 0 to add here.
+        return failures, warnings
+
+    if not _queue_section_present(disc_text):
+        failures.append(
+            "Test Queue section missing from 02-discovery.md — no prioritized "
+            "queue was built (Phase 1 output incomplete). Gate A has nothing to "
+            "drain, which is exactly the skip-by-omission this gate exists to "
+            "catch. Build a P0/P1/P2 Test Queue for the discovered endpoints "
+            "before finishing."
+        )
+        # A missing section implies zero items too, but one clear message beats two.
+        return failures, warnings
+
+    if total_queue_items == 0:
+        failures.append(
+            "Test Queue section exists but contains zero recognizable queue "
+            "items (no rows with a status in the last column). An empty queue "
+            "cannot establish coverage. Populate it with the surfaces you intend "
+            "to test or legitimately exclude."
+        )
+        return failures, warnings
+
+    endpoints = count_endpoints_in_catalog(disc_text)
+    if endpoints > 0:
+        ratio = total_queue_items / endpoints
+        if ratio < MIN_QUEUE_TO_ENDPOINT_RATIO:
+            warnings.append(
+                f"queue covers {total_queue_items} item(s) but {endpoints} endpoint(s) "
+                f"were discovered in the Endpoints Catalog (ratio {ratio:.0%} < "
+                f"{MIN_QUEUE_TO_ENDPOINT_RATIO:.0%}) — the queue may be a stub. "
+                "Verify major endpoints each have a corresponding test item; this is a "
+                "warning, not a block."
+            )
+
+    # Discovery-method diversity (anti-single-method). Relying on one discovery
+    # method (e.g. JS extraction alone) is the #1 cause of missed endpoints:
+    # interaction-triggered endpoints are invisible to static analysis. Warn — do
+    # not fail — when fewer than 2 methods left evidence. A genuine static-only
+    # site (no flows to walk) may legitimately show 1; the warning is advisory.
+    method_count, method_names = _count_discovery_methods(disc_text)
+    if method_count < 2:
+        found = ", ".join(method_names) if method_names else "none detected"
+        warnings.append(
+            f"only {method_count} discovery method(s) evident ({found}) — "
+            "single-method discovery (typically JS extraction) misses "
+            "interaction-triggered endpoints (checkout, refund, password-reset, "
+            "etc.) that only appear when a business flow is walked. Add runtime "
+            "traffic recording via business-flow traversal and/or directory "
+            "brute-force. This is the primary cause of low coverage; warning, not a block."
+        )
+
+    return failures, warnings
 
 
 # --- Gate B: coverage truthful ---------------------------------------------
@@ -373,12 +600,22 @@ def check_completeness(task_dir: Path, mode: str = "report-gate") -> tuple[bool,
         # failure in both modes (the report gate also flags the missing file,
         # but we fail independently so standalone invocations are not misled).
         failures.append("02-discovery.md missing — Test Queue cannot be verified")
-    open_items, a_info = check_queue_drained(disc_text)
+    open_items, a_info, total_queue_items = check_queue_drained(disc_text)
     # a_info (e.g. "missing") is redundant once we have failed above; drop it
     # when we already recorded the missing-file failure.
     if not disc_text:
         a_info = []
     warnings.extend(a_info)
+
+    # --- Gate 0: queue adequacy (anti-skip-by-omission) ---
+    # Must run alongside Gate A: Gate A only checks that items *in* the queue
+    # drained, so an agent that never built a queue has nothing to drain and
+    # would pass trivially. Gate 0 rejects the missing/empty queue itself.
+    # Runs after Gate A's scan so it can reuse total_queue_items (one pass).
+    g0_fail, g0_warn = check_queue_adequacy(disc_text, total_queue_items)
+    failures.extend(g0_fail)
+    warnings.extend(g0_warn)
+
     if open_items:
         if user_stop:
             # User explicitly stopped: remaining items are reported but do not

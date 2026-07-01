@@ -22,6 +22,23 @@ Every validation request must target a host approved in preflight `scope`. Hosts
 
 Manual single requests must use `python3 scripts/request_guard.py <task_dir> <url> --phase 3`; it verifies the scope allowlist before sending traffic, stores sanitized raw evidence, and appends a guarded request-log row.
 
+### Request evidence format (MANDATORY — read before writing any test entry)
+
+The **only** machine-parseable request record is the **Guarded Request Log** table that `request_guard.py` maintains. It looks like this:
+
+```
+## Guarded Request Log (mandatory - every validation request)
+
+| # | Method | Host (requested) | Path | Status | In Scope? | Tool | Notes |
+|---|--------|------------------|------|--------|-----------|------|-------|
+| 1 | GET | localhost:8080 | /api/admin/user-list.php | 200 | yes | request_guard | E-002 |
+| 2 | POST | localhost:8080 | /api/user/lottery.php | 200 | yes | request_guard | F-004; probabilities tampering |
+```
+
+**Why this matters:** the report gate (`generate_report.py`'s scope check) and the completeness gate (`check_completeness.py`'s Gate B) parse THIS table — they split Method / Host / Path into separate columns to verify every request stayed in scope and to cross-check coverage claims. If you instead record requests inside the per-test `| # | Payload | Result | Evidence |` table (e.g. writing `GET admin/js/config.js` into the Payload column), the parsers extract **zero** request rows and the gate fails with "no scoped request rows" — even though you did test. Do not do that.
+
+The per-test Payloads table (below) is for **payload detail and reasoning only** — it documents what you sent and observed. It is NOT the request log. Every actual HTTP validation request must additionally appear as a row in the Guarded Request Log via `request_guard.py`. If you only hand-write the Payloads table and skip `request_guard.py`, the report cannot be generated (the scope gate rejects it), and `check_report_integrity.py` will block the report.
+
 ---
 
 ## Validation Log
@@ -41,6 +58,8 @@ Manual single requests must use `python3 scripts/request_guard.py <task_dir> <ur
 {What we suspect based on discovery phase}
 
 #### Payloads Attempted
+
+> Payload detail only (what was sent + observed). This is NOT the request log — every request here must ALSO be recorded in the Guarded Request Log above via `request_guard.py`. Do not put `METHOD host /path` strings in the Payload column expecting them to count as request evidence.
 
 | # | Payload | Result | Evidence |
 |---|---------|--------|----------|

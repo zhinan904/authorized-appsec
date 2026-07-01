@@ -1229,9 +1229,37 @@ def _looks_like_host(value: str) -> bool:
 
 
 def _extract_request_rows(text: str) -> list[dict]:
+    """Extract request-log rows from 02-discovery.md / 03-vuln-test.md text.
+
+    Section-aware: rows under a Test Queue / Authenticated Surface Seeds heading
+    are skipped, because those are planning tables (| item | class | endpoint |
+    status |), not request logs — treating them as requests caused false scope
+    violations (e.g. the queue's 'Vulnerability Class' cell read as a host).
+    """
     rows = []
     header = []
+    skip_section = False
+    skip_level = 0
     for line in text.splitlines():
+        stripped = line.strip()
+        # Heading tracking: enter skip mode under Test Queue / Surface Seeds,
+        # leave it at the next heading of the same-or-higher level.
+        hm = re.match(r"^(#{1,6})\s+(.*)$", stripped)
+        if hm:
+            level = len(hm.group(1))
+            title = hm.group(2).lower()
+            is_skip = (
+                "test queue" in title
+                or re.search(r"\bp[012]\s+queue\b", title)
+                or "authenticated surface seeds" in title
+            )
+            if is_skip:
+                skip_section, skip_level = True, level
+            elif skip_section and level <= skip_level:
+                skip_section = False
+            continue
+        if skip_section:
+            continue
         cells = _parse_table_row(line)
         if len(cells) < 2:
             continue

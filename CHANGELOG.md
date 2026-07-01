@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.26.0 - 2026-07-01
+
+Attack-surface discovery methodology + exhaustive validation, addressing the root cause of low coverage observed on task PT-003 (15.8% of a 24-vuln range): 54% of the missed findings came from incomplete *discovery* (single-method JS extraction missing interaction-triggered endpoints), 33% from incomplete *validation* (parameters/vuln-classes left untested).
+
+### New: Attack-Surface Discovery Method (SKILL.md Phase 1-2)
+
+A four-layer discovery methodology is now mandated in SKILL.md: (1) static extraction (JS/source-map/OpenAPI) as baseline, (2) runtime traffic recording via business-flow traversal — the mandatory complement that catches interaction-triggered endpoints invisible to static analysis, (3) dictionary brute-force by response differential, (4) historical/associative. A three-question self-check flags incomplete discovery before Phase 3. The Endpoints Catalog must be the union of all layers, not one method's output.
+
+### New: Full Parameter & Class Coverage (SKILL.md Phase 3)
+
+Validation must exhaust each endpoint on three axes: all parameters (including hidden, via parameter discovery), a parameter × vuln-class matrix (one `order_no` tests IDOR + SQLi + path-traversal + auth, not just the first guess), and multi-role + state-transition + boundary-value testing. "One request per endpoint" is the under-testing smell.
+
+### Gate 0: discovery-method diversity check (check_completeness.py)
+
+`_count_discovery_methods` detects which of the four methods left evidence in 02-discovery.md (Endpoints Catalog / directory-scanning section / multi-role request log / historical markers). Fewer than 2 methods triggers a warning — single-method discovery is the #1 coverage sink. Warning, not a block, to avoid false-positives on genuinely static sites.
+
+## 2.25.0 - 2026-07-01
+
+Report integrity + request-log format hardening. Two gaps surfaced by real task PT-003: (a) the agent hand-wrote `report.md` while the task was still `phase_3 / in_progress / completeness_checked: false`, bypassing `check_report_gate` entirely; (b) `03-vuln-test.md` requests were recorded as `GET admin/js/config.js` crammed into a Payload column, which `_extract_request_rows` cannot parse, so the scope check saw zero requests and the gate failed — prompting the bypass.
+
+### New: report integrity audit (`scripts/check_report_integrity.py`)
+
+Independent backstop that audits the final artifact against the task's recorded state. A report is clean only if the task is `completed` / `phase_4`, `completeness_checked: true`, AND `check_completeness.py` passes right now (re-run live, catching stale/forged passes). Mandated in the Phase 4 flow after `generate_report.py`; exit 1 = the report was written without a legitimately-finished test effort.
+
+### Request-log format enforcement (`templates/vuln-test-template.md`)
+
+The per-test `| # | Payload | Result | Evidence |` table is now explicitly labeled payload-detail-only and NOT the request log. The template names the **Guarded Request Log** (maintained by `request_guard.py`: `| # | Method | Host | Path | Status | In Scope? | Tool | Notes |`) as the sole machine-parseable request evidence, with a concrete example. The scope gate and completeness Gate B parse that table; recording requests only in the Payloads table produces zero parseable rows and fails the gate.
+
 ## 2.24.0 - 2026-06-30
 
 Completeness gate: force the skill to test everything before finishing, not just a few queue items. Closes the loophole where an agent could validate a handful of P0 items and jump to the report, or mark untested surface `not-covered` with no reason.

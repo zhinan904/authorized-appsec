@@ -5,7 +5,7 @@ description: Use for authorized Web, API, or application security assessment whe
 
 # Authorized AppSec Testing
 
-**Version**: 2.24.0 | **Updated: 2026-06-30**
+**Version**: 2.26.0 | **Updated: 2026-07-01**
 
 ## Purpose
 
@@ -68,6 +68,25 @@ For each confirmed finding, immediately update: `findings.md` (authority), `find
 
 Keep validation **non-destructive**: no data modification, shell execution, persistence, mass extraction, DoS, or privilege expansion.
 
+### Attack-Surface Discovery Method (Phase 1-2 — read before building the queue)
+
+The single largest cause of missed findings is **incomplete attack-surface discovery**, not shallow testing: every endpoint you never discover is a finding you can never make. Relying on one discovery method (typically JS extraction) leaves the interaction-triggered endpoints — the ones only called when a user walks a business flow — completely invisible. Discovery must layer **four** complementary methods; no single one is sufficient.
+
+**Layer 1 — Static extraction (baseline, has blind spots).** Extract endpoints from JS bundles, source maps (`.js.map` — often left on in prod, far richer than minified JS), OpenAPI/Swagger, HTML forms/links, and inline `fetch`/`XHR` calls. This catches every endpoint the page calls on load. **Blind spot:** endpoints wired into event handlers (button click → checkout, refund, password reset) are NOT called on load and will NOT appear. Treat Layer 1 as a floor, not a ceiling.
+
+**Layer 2 — Runtime traffic recording via business-flow traversal (closes Layer 1's blind spot; mandatory, not optional).** Drive the application as a real user of **each business role** and walk **each complete business flow end to end** — e.g. register → login → browse → add-to-cart → checkout → pay → view order detail → refund → recharge → password-reset; and separately the privileged flows (merchant onboarding/audit, admin user-management). Record every request emitted along the way (proxy via mitmproxy/Burp/Charles, or drive each step through `request_guard.py` so it lands in the Request Log). Interaction-triggered endpoints (refund, order-detail, create-order, balance-records, reset-password) are discoverable **only** this way. Principle: **discovery coverage is proportional to the number of distinct functional paths walked.** Skipping this layer is the #1 reason an assessment stalls at ~15% coverage.
+
+**Layer 3 — Dictionary brute-force (catches what the frontend never exposes).** Some endpoints exist only server-side (internal APIs, debug interfaces, legacy routes). Brute-force each discovered path prefix (`/api/v1/`, `/api/user/`, `/admin/`, …) with a generic API wordlist (SecLists `raft`/`api-endpoints`). Judge by **response differential**, not just 200 — a 401/403/405/500 all prove the endpoint exists and is merely access-gated. A non-empty "Directory Scanning" section in `02-discovery.md` is the auditable record this ran.
+
+**Layer 4 — Historical & associative (cheap, high-yield).** `robots.txt`, `sitemap.xml`, `.well-known/`, `swagger.json`/`openapi.yaml`, error-message leaks (stack traces, internal hostnames, file paths), old snapshots (Wayback Machine), and the target framework's known historical endpoints (Spring `/actuator`, Django `/admin`, etc.).
+
+**Discovery self-check (any "no" = discovery incomplete, go back before Phase 3):**
+1. Have I triggered the functional pages of **every business role** (anonymous / regular user / each privileged role)?
+2. Have I walked **each complete business flow** end to end and recorded every request it emitted?
+3. Did I use **≥2 methods** (Layer 1 + at least one of Layer 2/3/4) and cross-check, rather than relying on one?
+
+The Endpoints Catalog must be the **union** of all four layers' findings, not the output of a single code path. `check_completeness.py` warns when only one discovery method is evident — that warning flags the exact failure mode that sinks coverage.
+
 ### Scope Guard (mandatory in every active phase)
 
 The preflight `scope` is a hard constraint, not a suggestion. Discovery, validation, and any active request must stay inside it. The two rules below are enforced at every phase boundary:
@@ -96,6 +115,16 @@ Four faces, in dependency order:
 
 Faces ②③④ run against the endpoint list produced by ①, in parallel with the existing unauthenticated Phase 3 validation. Read `commands/authenticated-testing.md` for the full method, session handling, and coverage rules. A face is only "done" when completed or explicitly marked not-covered-with-reason — degraded/skipped faces must appear in the report's non-findings, never silently dropped.
 
+### Full Parameter & Class Coverage (Phase 3 — test each endpoint exhaustively)
+
+A discovered endpoint is not "tested" by validating one parameter against one vuln class. Two failure modes burn the most coverage here: (a) testing only the **visible** parameter and missing hidden ones on the same endpoint, and (b) testing one parameter against the **first vuln class that came to mind**. Exhaust each endpoint on three axes:
+
+- **All parameters, including hidden ones.** A single endpoint often carries several parameters, each a distinct attack surface — e.g. an upload endpoint's `filename` (file-upload) and `category` (path traversal) are two independent findings. Enumerate parameters (frontend form fields are a floor; use parameter discovery / observed request bodies to find the rest), then test every one. Do not cross an endpoint off after one parameter.
+- **Parameter × vuln-class matrix.** For each parameter, run the full relevant class list, not the first guess. A value like `order_no` is not just an IDOR target — it may also be SQLi, path traversal, SSRF (if URL-shaped), or mass-assignment. An `image_url` is not just SSRF — it may be XSS, open-redirect, or RFI. Test the matrix.
+- **Multi-role + state transitions + boundary values.** Replay each state-changing endpoint across every available role session (the auth-branch faces above), and test state transitions (create → edit → delete → access-after-delete) where IDOR/auth flaws hide. Feed boundary values: negatives, zero, empty, oversized, type confusion (string where int expected).
+
+The rule of thumb: if your 03-vuln-test log shows one request per endpoint, you have under-tested. Aim for one request per **parameter × class** combination that plausibly applies.
+
 ### Completeness Loop (test everything before finishing)
 
 Phase 3 is **not** "validate a few queue items and move on". The whole point of an authorized assessment is coverage. Before Phase 3 may end and a report may be emitted, the task must pass a machine-checked **completeness gate** — two hard gates that cannot be talked around by prose:
@@ -103,6 +132,8 @@ Phase 3 is **not** "validate a few queue items and move on". The whole point of 
 ```bash
 python3 scripts/check_completeness.py <task_dir>
 ```
+
+**Gate 0 — Queue exists & adequate (anti-skip-by-omission).** The `## Test Queue` section in `02-discovery.md` is mandatory. Omitting it (so Gate A has "nothing to drain") is itself a hard failure — you cannot escape the completeness gate by simply never building a queue. The queue must contain at least one item with a status; a queue covering only a tiny fraction of discovered endpoints triggers a warning. Phase 1's job is to build this queue from the fingerprint/Endpoints Catalog — that output is required input for Phase 3's loop.
 
 **Gate A — Queue drained.** Every item in `02-discovery.md`'s Test Queue (P0/P1/P2) **and** every row in the "Authenticated Surface Seeds" table must reach a terminal status. Open statuses (`pending` / `in_progress` / blank) fail the gate. Terminal statuses: `validated`, `confirmed`, `false_positive`, `not_applicable`, `out-of-scope`. `deferred` counts as terminal **only if a reason is given** (e.g. `deferred - need admin creds`); a bare `deferred` is treated as still open. If new endpoints are discovered during Phase 3, add them to the queue first — they must drain too.
 
@@ -263,6 +294,14 @@ python3 scripts/ensure_structured_outputs.py <task_dir>
 python3 scripts/generate_report.py <task_dir>
 ```
 
+**Report integrity audit (mandatory, anti-bypass).** Because `report.md` is meant to be machine-generated, an agent can be tempted to hand-write it when the gate fails — sidestepping `check_report_gate` entirely (observed in the wild: a task was left at `phase_3 / in_progress / completeness_checked: false` yet had a report). The backstop is `check_report_integrity.py`, which audits the final artifact against the task's recorded state. Run it **after** generating the report and treat any non-zero exit as a hard stop:
+
+```bash
+python3 scripts/check_report_integrity.py <task_dir>
+```
+
+It fails (exit 1) if `report.md` exists but the task is not `completed` / `phase_4`, or `completeness_checked` is not `true`, or the completeness gate does not pass **right now** (re-run live, so a stale or forged pass is caught). A report that fails this audit was written without a legitimately-finished test effort — delete it, return to Phase 3, drain the queue through the completeness loop, then regenerate.
+
 **Test coverage gate**: before a report is considered done, fill `templates/coverage-checklist.md` against this task's actual testing. Every surface row must be `covered`, `degraded`, `not-covered`, or `out-of-scope` — never blank. The report's test process section (四、测试过程) is generated from the checklist's per-surface rows; `degraded` and `not-covered` rows must appear explicitly. Silent omission of untested surface is forbidden.
 
 **Scope adherence gate**: the coverage checklist's "Scope Adherence" section must also be filled — cross-check the `02-discovery.md` / `03-vuln-test.md` request logs against the scope allowlist and confirm every request target was in scope. Any boundary violation (a request to a host outside the approved scope) blocks the report until it is disclosed to the user. A report that skipped Phase 1-2 logging (no `02-discovery.md` request log) cannot pass this gate — the requests must be logged first.
@@ -304,6 +343,7 @@ Load **only the file needed for the current phase**:
 | Evidence capture with hash chain | `scripts/capture_evidence.py` |
 | Scope-checked request wrapper | `scripts/request_guard.py` |
 | Completeness gate (queue drained + coverage truthful) | `scripts/check_completeness.py` |
+| Report integrity audit (anti-bypass: report vs. finished task state) | `scripts/check_report_integrity.py` |
 | Cleanup and rollback protocol | `templates/cleanup-template.md` |
 | Phase 0 output format | `templates/fingerprint-template.md` |
 | Phase 1-2 output format | `templates/discovery-template.md` |
