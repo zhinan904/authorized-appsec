@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.24.0 - 2026-06-30
+
+Completeness gate: force the skill to test everything before finishing, not just a few queue items. Closes the loophole where an agent could validate a handful of P0 items and jump to the report, or mark untested surface `not-covered` with no reason.
+
+### New: completeness gate (`scripts/check_completeness.py`)
+
+A second machine-checked gate, enforced by the report generator (`check_report_gate` now calls it as its 5th check). Two hard gates that must both pass before a report is allowed:
+
+- **Gate A — Queue drained**: every item in `02-discovery.md`'s Test Queue (P0/P1/P2) **and** every "Authenticated Surface Seeds" row must reach a terminal status (`validated` / `confirmed` / `false_positive` / `not_applicable` / `out-of-scope`, or `deferred` **with a reason**). `pending` / `in_progress` / blank items block the report.
+- **Gate B — Coverage truthful**: `covered` rows must have a matching request in `03-vuln-test.md` (or a reason); `not-covered` / `degraded` rows **must** state a reason; `out-of-scope` rows must use a prescribed phrase. This is the direct fix for "claimed-but-not-tested" and "silent drop" skip modes.
+
+### Loop protocol (SKILL.md)
+
+Phase 3 is now a loop: run validations → run `check_completeness.py` → if open items remain, go back and test exactly those → repeat until exit 0. The agent cannot talk around the gate; it must actually test. The single legitimate "finish without testing everything" exit is `user_stop` (explicit user decision), under which remaining items are reported as "not tested by user decision" rather than blocking.
+
+### Task metadata (`task-template.md`)
+
+- New `completeness_checked` flag (set true only after `check_completeness.py` exits 0) and `user_stop` flag (explicit user stop only).
+- `loop_depth` semantics corrected: it **notifies** the user past depth 3 but no longer hard-stops, since the completeness loop legitimately re-enters Phase 3 many times.
+
 ## 2.23.0 - 2026-06-26
 
 Customer-facing Chinese report format + coverage-checklist alignment. This is a major feature update to the report output pipeline.

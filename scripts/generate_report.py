@@ -1470,6 +1470,23 @@ def check_report_gate(task_dir: Path) -> tuple[bool, list[str]]:
         if scope_violations:
             gaps.append("request log scope check failed — " + "; ".join(scope_violations[:5]))
 
+    # --- Completeness gate (anti-skip): queue drained + coverage truthful ---
+    # Delayed import avoids a circular dependency (check_completeness imports
+    # this module to reuse its parsing helpers).
+    from check_completeness import check_completeness
+    try:
+        ok, comp_messages = check_completeness(task_dir, mode="report-gate")
+    except Exception as exc:  # pragma: no cover - defensive
+        ok, comp_messages = False, [f"completeness check error: {exc}"]
+    if not ok:
+        gaps.append(
+            "completeness gate failed — not all testable surface was actually tested. "
+            "Run `python3 scripts/check_completeness.py <task_dir>` for the itemized list. "
+            "Outstanding items:"
+        )
+        # Only the failure block is appended; warnings are surfaced separately below.
+        gaps.extend(m for m in comp_messages if not m.startswith("---") and m != "=== COMPLETENESS GATE FAILED ===")
+
     return (len(gaps) == 0), gaps
 
 

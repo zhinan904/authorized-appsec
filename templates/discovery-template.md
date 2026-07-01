@@ -172,11 +172,18 @@ Hidden parameters found by fuzzing known endpoints — not present in JS/API ext
 
 ## Test Queue
 
+> **Completeness requirement**: Phase 3 does not end until every item in P0/P1/P2
+> **and** every "Authenticated Surface Seeds" row below reaches a terminal status
+> (`validated` / `confirmed` / `false_positive` / `not_applicable` / `out-of-scope`,
+> or `deferred` **with a reason**). `check_completeness.py` enforces this; an open
+> `pending`/`in_progress` item blocks the report. If you discover new endpoints
+> mid-Phase-3, add them here first.
+
 ### P0 Queue (High Priority)
 
 | Item | Vulnerability Class | Endpoint | Status |
 |------|--------------------|----------|--------|
-| 1 | {auth bypass} | {/api/login} | {pending/in_progress/validated} |
+| 1 | {auth bypass} | {/api/login} | {pending/in_progress/validated/confirmed/false_positive/not_applicable/out-of-scope} |
 | 2 | {IDOR} | {/api/users/:id} | pending |
 | 3 | {sqli} | {/search?q=} | pending |
 

@@ -5,7 +5,7 @@ description: Use for authorized Web, API, or application security assessment whe
 
 # Authorized AppSec Testing
 
-**Version**: 2.23.0 | **Updated: 2026-06-26**
+**Version**: 2.24.0 | **Updated: 2026-06-30**
 
 ## Purpose
 
@@ -50,7 +50,7 @@ Active testing runs inside the Kali Linux VM or an equivalent isolated execution
 | 0: Preflight & Fingerprint | Confirm scope, collect HTTP fingerprint, attack-surface hypothesis, run L3 hypothesis trigger | `01-fingerprint.md`, `l3-hypotheses.json` | `fingerprint-template.md` |
 | 1: Attack-Surface Mapping | Build prioritized test queue from fingerprint | `02-discovery.md` | `discovery-template.md` |
 | 2: Targeted Discovery | Collect only what the queue needs | `02-discovery.md` (append) | `discovery-template.md` |
-| 3: Vulnerability Validation | Validate one queue item at a time, record evidence | `03-vuln-test.md` | `vuln-test-template.md` |
+| 3: Vulnerability Validation | Validate one queue item at a time, record evidence; **loop until `check_completeness.py` passes** | `03-vuln-test.md` | `vuln-test-template.md` |
 | 4: Chain Analysis & Report | Analyze risk chains, generate report | `04-chain.md`, `report.md` | `chain-template.md`, `result-template.md` |
 | 5: Retest (Optional) | Verify remediation of original findings | `RETEST-{ID}/` | `retest-template.md` |
 
@@ -95,6 +95,38 @@ Four faces, in dependency order:
 **Account rules**: test accounts only; synthetic UUID-like values containing `appsec-test`; sequential/numeric/real-user IDs are not test data.
 
 Faces ②③④ run against the endpoint list produced by ①, in parallel with the existing unauthenticated Phase 3 validation. Read `commands/authenticated-testing.md` for the full method, session handling, and coverage rules. A face is only "done" when completed or explicitly marked not-covered-with-reason — degraded/skipped faces must appear in the report's non-findings, never silently dropped.
+
+### Completeness Loop (test everything before finishing)
+
+Phase 3 is **not** "validate a few queue items and move on". The whole point of an authorized assessment is coverage. Before Phase 3 may end and a report may be emitted, the task must pass a machine-checked **completeness gate** — two hard gates that cannot be talked around by prose:
+
+```bash
+python3 scripts/check_completeness.py <task_dir>
+```
+
+**Gate A — Queue drained.** Every item in `02-discovery.md`'s Test Queue (P0/P1/P2) **and** every row in the "Authenticated Surface Seeds" table must reach a terminal status. Open statuses (`pending` / `in_progress` / blank) fail the gate. Terminal statuses: `validated`, `confirmed`, `false_positive`, `not_applicable`, `out-of-scope`. `deferred` counts as terminal **only if a reason is given** (e.g. `deferred - need admin creds`); a bare `deferred` is treated as still open. If new endpoints are discovered during Phase 3, add them to the queue first — they must drain too.
+
+**Gate B — Coverage truthful.** For `coverage-checklist.md`:
+- A row marked `covered` must have a matching request in `03-vuln-test.md` for that surface class, or carry a reason justifying the coverage. Marking a row `covered` with no evidence request and no reason fails the gate — this is the primary "claimed-but-not-tested" skip mode.
+- A row marked `not-covered` or `degraded` **must** state a reason. Empty reason = silent drop = gate failure.
+- A row marked `out-of-scope` must reference a prescribed condition (`mechanism not present` / `feature not present` / `protocol not present` / `no LLM endpoint` / `no K8s surface` / `no session supplied` / `explicitly excluded`). Free-text excuses are rejected.
+
+**Loop protocol.** This gate is a loop, not a one-shot check:
+
+```
+run a batch of Phase 3 validations
+  → update queue statuses & coverage rows
+  → run check_completeness.py
+  → if it returns open items: go back to Phase 3 and test exactly those items
+  → repeat until exit 0
+only then proceed to Phase 4
+```
+
+The gate is enforced twice: the report generator (`generate_report.py`'s `check_report_gate`) calls it, so a report cannot be emitted while items remain open. `--skip-gate` overrides the whole gate (preserved for imports/fixtures) but is recorded in the report.
+
+**You may not** satisfy the gate by mass-marking untested rows `not-covered` with no reason, or by inventing out-of-scope excuses — the script rejects both. If a surface genuinely does not apply, mark it `out-of-scope` with the correct prescribed phrase.
+
+**The only legitimate "finish without testing everything" exit** is `user_stop`: when the user explicitly says to stop (enough / wrap it up / time's up), set `- user_stop: true` in `task.md`. The queue gate then relaxes — remaining items are listed in the report as "not tested by user decision" rather than blocking it. Coverage truthfulness still applies even under `user_stop`. Never set `user_stop` on your own initiative to escape an unfinished queue; it exists for an explicit user decision only.
 
 ### Automatic L3 Hypothesis Trigger
 
@@ -271,6 +303,7 @@ Load **only the file needed for the current phase**:
 | WAF / CDN origin IP discovery | `payloads/waf-origin-discovery.md` |
 | Evidence capture with hash chain | `scripts/capture_evidence.py` |
 | Scope-checked request wrapper | `scripts/request_guard.py` |
+| Completeness gate (queue drained + coverage truthful) | `scripts/check_completeness.py` |
 | Cleanup and rollback protocol | `templates/cleanup-template.md` |
 | Phase 0 output format | `templates/fingerprint-template.md` |
 | Phase 1-2 output format | `templates/discovery-template.md` |

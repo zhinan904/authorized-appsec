@@ -10,6 +10,11 @@
 
 **Rule**: `degraded` and `not-covered` rows **must** appear in the report's "Test Coverage & Gaps" section. Silently dropping them is forbidden — that is exactly the invisible-gap problem this checklist solves.
 
+**Truthfulness rule** (enforced by `scripts/check_completeness.py` before a report is allowed): marking a row is not enough — the mark must be backed by evidence.
+- `covered` → a matching request must exist in `03-vuln-test.md` for that surface class, or a reason must justify the coverage. "Covered" with no request and no reason is rejected as a claimed-but-not-tested skip.
+- `not-covered` / `degraded` → the Reason column **must** be filled. Empty reason = silent drop = gate failure.
+- `out-of-scope` → the Reason must use a prescribed phrase (`mechanism not present` / `feature not present` / `protocol not present` / `no LLM endpoint` / `no K8s surface` / `no session supplied` / `explicitly excluded`). Invented excuses are rejected.
+
 **Format requirement**: the report gate (`generate_report.py`) parses this file as **markdown tables** — Status must be in the second column of each `| Surface | Status | Reason |` row, and Scope Adherence Result in the second column of each `| Check | Result | Evidence |` row. Free-form paragraphs or bulleted lists are not parsed; if you write coverage that way, the gate and the report's gap section will not see it.
 
 ---
