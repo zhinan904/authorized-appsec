@@ -1,5 +1,41 @@
 # Changelog
 
+## 2.28.0 - 2026-07-01
+
+Skill usability + safety hardening from an external review. Four changes
+addressing payload-selection guesswork, scanner authorization, execution-
+environment safety, and trigger reliability.
+
+### New: payload selection index (`payloads/INDEX.md`)
+The largest coverage sink was parameter under-testing — agents picked a payload
+by the endpoint's obvious class and stopped, missing the parameter's other
+classes (an `order_no` tested for IDOR but not SQLi; an upload's `filename`
+tested but `category` not). The index maps **parameter shape → payload file(s)**
+(numeric ID → idor+sqli; URL-shaped → ssrf+open-redirect; money → business-logic;
+filename → file-upload+path-traversal; etc.), making the choice mechanical
+rather than intuitive. Round 2 (depth pass) now directs agents to consult it and
+load every file a parameter's row lists. 55 payload files indexed.
+
+### Structured nuclei authorization (`task-template.md`)
+`nuclei_authorized` is now a preflight field defaulting to `false`. Agents must
+read it before running nuclei; it must be `true` to proceed. Moves the opt-in
+rule from prose (buried at SKILL.md §236) into a machine-readable state that
+cannot be missed by skipping ahead in the doc.
+
+### Execution-environment guard (`discover-capabilities.sh`)
+Warns when run outside an isolated pentest VM (no Kali/Parrot/BlackArch hostname
+match and no `AUTHORIZED_APPSEC_VM=true` flag). Active probing belongs in an
+isolated environment; the warning surfaces a misfire before tools are selected.
+Warning-only (does not block); set the env var to acknowledge.
+
+### Trigger description trimmed (SKILL.md frontmatter)
+Frontmatter `description` cut from 586 → 257 chars. The original packed trigger
+conditions + reverse-exclusions + runtime capability notes into the matcher
+input, risking under-triggering on short prompts. Now: trigger conditions +
+one-line scope + hard exclusions only. (Full SKILL.md section-split refactoring
+deferred to a separate task to avoid disturbing the recently-tuned Completeness
+Loop / Discovery / Parameter sections.)
+
 ## 2.27.0 - 2026-07-01
 
 Two-round Phase 3 loop (breadth then depth). Addressing the dominant coverage sink observed on PT-004 (25.4% score): parameter-level under-testing (1790 pts lost) — endpoints were each tested once against their first-guess vuln class, but secondary parameters (upload's `category`, refund's `refund_amount`) were never probed.

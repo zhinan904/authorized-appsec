@@ -1,11 +1,11 @@
 ---
 name: authorized-appsec
-description: Use for authorized Web, API, or application security assessment when the user provides a target and asks for reconnaissance, attack-surface mapping, vulnerability validation, reporting, or resuming a prior test. Before active probing, verify authorization, scope, and allowed intensity. Capabilities are discovered inside the execution VM at runtime; the skill selects available tools per capability rather than assuming specific tool names. Do not use for red-team adversary simulation, phishing, malware, persistence, lateral movement, credential theft, stealth, or post-exploitation.
+description: Authorized black-box web/API security assessment (pentest, vulnerability testing, recon, attack-surface mapping, validation, reporting). Use when the user gives a target they are authorized to test. Not for red-team, phishing, malware, or post-exploitation.
 ---
 
 # Authorized AppSec Testing
 
-**Version**: 2.27.0 | **Updated: 2026-07-01**
+**Version**: 2.28.0 | **Updated: 2026-07-01**
 
 ## Purpose
 
@@ -146,7 +146,7 @@ python3 scripts/check_completeness.py <task_dir>
 
 **Round 1 — Breadth pass.** Walk every queue item once and give it a preliminary verdict fast. Send the single most-likely-to-hit request per endpoint (the obvious payload for its vuln class), record the result, set a status. The goal of Round 1 is **coverage of endpoints, not depth** — every endpoint should leave `pending` and carry an initial `confirmed` / `false_positive` / `suspicious` / `deferred`. Do not try to exhaust parameters here. Round 1 is done when no queue item is still `pending`/`in_progress`.
 
-**Round 2 — Depth pass.** Now go back and exhaust each endpoint that Round 1 marked `confirmed` or `suspicious`. For **every parameter** the endpoint exposes (including secondary ones Round 1 never touched — e.g. an upload endpoint's `filename` was tested in Round 1 but its `category` parameter was not; a refund endpoint's `order_no` was tested but `refund_amount` was not), run the parameter × vuln-class matrix from the "Full Parameter & Class Coverage" section. Re-examine `false_positive` items to confirm they are genuinely excluded, not just unexplored. Round 2 is done when each confirmed/suspicious endpoint's declared parameters have all been probed. This round is where most findings beyond the obvious ones are made; skipping it is the primary cause of a low coverage score.
+**Round 2 — Depth pass.** Now go back and exhaust each endpoint that Round 1 marked `confirmed` or `suspicious`. For **every parameter** the endpoint exposes (including secondary ones Round 1 never touched — e.g. an upload endpoint's `filename` was tested in Round 1 but its `category` parameter was not; a refund endpoint's `order_no` was tested but `refund_amount` was not), run the parameter × vuln-class matrix from the "Full Parameter & Class Coverage" section. **To pick the right payload for each parameter, consult `payloads/INDEX.md`** — it maps parameter shapes (numeric ID, URL-shaped, money, filename, token, …) to the payload file(s) that apply. A parameter usually maps to *several* classes (an `order_no` is both IDOR and SQLi); load every file its INDEX row lists, not just the first-guess. Re-examine `false_positive` items to confirm they are genuinely excluded, not just unexplored. Round 2 is done when each confirmed/suspicious endpoint's declared parameters have all been probed. This round is where most findings beyond the obvious ones are made; skipping it is the primary cause of a low coverage score.
 
 ```
 Round 1 (breadth): one request per endpoint → every queue item leaves pending
@@ -247,6 +247,7 @@ When an action is not safe, provide a risk explanation, bounded manual validatio
 nuclei (and equivalent template-based scanners such as nikto/wpscan) is **opt-in only** and is excluded from the default workflow:
 
 - **Default behavior**: do not propose, suggest, or run nuclei in any phase. The Phase 0–3 flow does not depend on it; fingerprinting and validation proceed with manual payload testing from `payloads/`.
+- **Structured gate**: `task.md` carries a `nuclei_authorized` field, default `false`. **Before running nuclei, you MUST read this field; if it is not `true`, do not run nuclei.** When the user explicitly requests nuclei, set `nuclei_authorized: true` in `task.md` first. This makes the authorization a machine-readable state, not a rule you can overlook by skipping ahead in the doc.
 - **Trigger**: nuclei runs only when the user explicitly asks for it — for example "run nuclei", "nuclei scan", "CVE/template scan with nuclei". General requests like "scan for vulnerabilities" or "check for known issues" do **not** authorize nuclei; treat them as the standard manual workflow.
 - **Before running**: still confirm the standard preflight boundary (target, scope, intensity, rate) and record the explicit approval in `task.md` under `## Tools Used` and in `## Automation / Scanners`.
 - **Do not** auto-escalate to nuclei from an L3 hypothesis, a fingerprint tag match, or a discovery result. These are inputs to manual validation, not triggers for template scanning.

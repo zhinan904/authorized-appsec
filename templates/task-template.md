@@ -11,6 +11,7 @@
 - intensity: pending
 - automation: pending
 - credentials: pending
+- nuclei_authorized: false
 - results_root: {RESULTS_ROOT}
 - task_dir: {RESULTS_ROOT}/PT-{YYYYMMDD}-{SEQ}-example-com
 - status: in_progress

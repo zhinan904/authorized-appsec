@@ -20,6 +20,29 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
+# Execution-environment guard (anti-misfire). Active probing belongs in an
+# isolated/authorized VM, not on a developer laptop or shared host. This is a
+# warning, not a hard block, unless AUTHORIZED_APPSEC_VM is explicitly set to a
+# falsy value (opt-out) or the caller is clearly not isolated. Set
+# AUTHORIZED_APPSEC_VM=true to acknowledge "I am in an authorized environment"
+# and silence the warning.
+if [[ "${AUTHORIZED_APPSEC_VM:-}" != "true" ]]; then
+  HOSTNAME_NOW="$(hostname 2>/dev/null || echo '')"
+  KERNEL="$(uname -s 2>/dev/null)"
+  # Heuristics for common authorized/isolated environments.
+  case "${HOSTNAME_NOW}|${KERNEL}" in
+    *kali*|*kali*|*parrot*|*blackarch*|*pentest*) : ;;   # looks like a pentest distro — OK
+    *)
+      echo "⚠️  Environment check: this does not look like an isolated pentest VM" \
+           "(hostname='${HOSTNAME_NOW}', kernel='${KERNEL}')." >&2
+      echo "   Active probing should run inside a Kali/authorized VM, not on a host" >&2
+      echo "   machine. If you ARE in an authorized environment, set" >&2
+      echo "   AUTHORIZED_APPSEC_VM=true to acknowledge and silence this warning." >&2
+      echo "   (warning only — proceeding)" >&2
+      ;;
+  esac
+fi
+
 OUTPUT_FILE="./capabilities.json"
 MCP_URL=""
 INCLUDE_NUCLEI_TEMPLATES=0
