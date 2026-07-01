@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.27.0 - 2026-07-01
+
+Two-round Phase 3 loop (breadth then depth). Addressing the dominant coverage sink observed on PT-004 (25.4% score): parameter-level under-testing (1790 pts lost) — endpoints were each tested once against their first-guess vuln class, but secondary parameters (upload's `category`, refund's `refund_amount`) were never probed.
+
+### Phase 3 restructured into two rounds (SKILL.md)
+
+The completeness loop is now explicitly two rounds, not a single pass:
+- **Round 1 — Breadth pass**: one request per endpoint, every queue item leaves `pending` with a preliminary verdict. Goal is endpoint coverage, not depth.
+- **Round 2 — Depth pass**: return to each `confirmed`/`suspicious` endpoint and exhaust every parameter (including secondary ones Round 1 skipped) against the parameter × vuln-class matrix. Re-examine `false_positive` items too.
+- Round 1 completion is explicitly NOT test completion — a report after Round 1 only captures each endpoint's first guess (~25% of surface historically).
+
+This targets the parameter-exhaustion gap directly. No machine parameter-coverage check was added: an investigation found parameter names drift between catalog and request log (`refund_amount` vs `amount`) and the Guarded Request Log is inconsistently produced, so a parameter check would over-fire. The two-round structure relies on the Full Parameter & Class Coverage methodology (v2.26.0) plus the self-check, with gate timing unchanged (runs after both rounds).
+
+### Gate B: out-of-scope reason relaxation
+
+`out-of-scope` coverage rows no longer hard-require a prescribed phrase. An honest free-text reason ("single host target, no domain scope") is accepted; only an empty reason fails. Prescribed phrases remain recommended (advisory warning if absent). Fixes the PT-004 case where accurate prose reasons were rejected, forcing agents into boilerplate that lost information.
+
 ## 2.26.0 - 2026-07-01
 
 Attack-surface discovery methodology + exhaustive validation, addressing the root cause of low coverage observed on task PT-003 (15.8% of a 24-vuln range): 54% of the missed findings came from incomplete *discovery* (single-method JS extraction missing interaction-triggered endpoints), 33% from incomplete *validation* (parameters/vuln-classes left untested).

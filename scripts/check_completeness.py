@@ -31,10 +31,12 @@ gates that must all pass before Phase 3 is allowed to end:
           covered row still needs a reason if no matching request is found.
         - every `not-covered` / `degraded` row MUST have a non-empty reason.
           Empty reason = silent drop = gate failure.
-        - every `out-of-scope` row MUST use one of the prescribed phrasings
-          (mechanism not present / feature not present / protocol not present /
-          no LLM endpoint / no K8s surface / no session supplied / explicitly
-          excluded). Free-text out-of-scope reasons are rejected.
+        - every `out-of-scope` row MUST carry a non-empty reason explaining why
+          the surface does not apply (empty reason = silent drop = failure).
+          Free-text reasons are accepted — they need not use a prescribed phrase,
+          though matching one (e.g. 'mechanism not present', 'feature not
+          present', 'no session supplied', 'explicitly excluded') is advised and
+          yields only a warning if absent.
 
 Usage:
     python3 scripts/check_completeness.py <task_dir>
@@ -564,14 +566,32 @@ def check_coverage_truthful(task_dir: Path) -> tuple[list[str], list[str]]:
                     "every not-covered/degraded row must state why (this is the main skip loophole)"
                 )
         elif status == "out-of-scope":
-            reason_low = reason.lower()
-            if not any(phrase in reason_low for phrase in PRESCRIBED_OUT_OF_SCOPE):
+            # An out-of-scope row must carry a non-empty reason — that is the
+            # real anti-skip check (an empty reason = silent drop). We do NOT
+            # hard-require a prescribed phrase: free-text reasons that genuinely
+            # explain *why* the surface does not apply (e.g. "single host target,
+            # no domain scope") are honest and acceptable. Forcing agents into
+            # boilerplate phrases ("explicitly excluded") loses information and
+            # punishes accurate prose. Prescribed phrases are advisory: if the
+            # reason has substance but matches none, we warn (for categorization)
+            # rather than fail.
+            if not reason or reason.lower() in {"-", "n/a", "none", "tbd"}:
                 failures.append(
-                    f"coverage row '{surface}' marked out-of-scope with reason "
-                    f"'{reason}' — must reference a prescribed condition "
-                    "(e.g. 'mechanism not present', 'feature not present', "
-                    "'no LLM endpoint', 'no session supplied', 'explicitly excluded')"
+                    f"coverage row '{surface}' marked out-of-scope with no reason — "
+                    "every out-of-scope row must state why the surface does not apply "
+                    "(an empty reason is the silent-drop skip loophole)"
                 )
+            else:
+                reason_low = reason.lower()
+                if not any(phrase in reason_low for phrase in PRESCRIBED_OUT_OF_SCOPE):
+                    warnings.append(
+                        f"coverage row '{surface}' marked out-of-scope with reason "
+                        f"'{reason}' — accepted (non-empty), but does not reference a "
+                        "prescribed category phrase (e.g. 'mechanism not present', "
+                        "'feature not present', 'no session supplied', 'explicitly "
+                        "excluded'). Consider aligning the wording for easier "
+                        "categorization; this is advisory, not a block."
+                    )
         # blank status rows are already caught by the existing report gate;
         # we do not duplicate that here.
 
