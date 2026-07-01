@@ -7,6 +7,19 @@ from urllib.parse import urlparse
 from pathlib import Path
 
 
+def _safe_urlparse(value: str):
+    """urlparse that never raises. Some cell contents (JSON arrays like
+    ``[100,0,0]``, payload fragments) get fed here when guessed as a host;
+    ``urlparse`` treats a leading ``[`` as an IPv6 literal and raises
+    ``ValueError("Invalid IPv6 URL")`` on non-IPv6 content. Guard it so a
+    malformed cell can never crash request-log parsing or the completeness gate.
+    """
+    try:
+        return urlparse(value)
+    except ValueError:
+        return None
+
+
 def read_json(path: Path, default):
     if not path.exists():
         return default
@@ -90,13 +103,15 @@ def pretty_status(value: str) -> str:
 
 def report_title(summary):
     target = summary.get("target", "")
-    host = urlparse(target).netloc or target
+    parsed = _safe_urlparse(target)
+    host = (parsed.netloc if parsed else None) or target
     return f"Authorized AppSec Assessment Report - {host or 'unknown-target'}"
 
 
 def short_target(summary):
     target = summary.get("target", "")
-    return urlparse(target).netloc or target
+    parsed = _safe_urlparse(target)
+    return (parsed.netloc if parsed else None) or target
 
 
 def build_findings_table(findings, vid_map=None, cvss_scores=None):
@@ -1072,8 +1087,8 @@ def _normalize_host(value: str) -> str:
     value = (value or "").strip().strip("`").lower()
     if not value or value in {"-", "n/a", "none", "unknown", "pending"}:
         return ""
-    parsed = urlparse(value if "://" in value else f"//{value}")
-    host = parsed.hostname or value.split("/")[0].split(":")[0]
+    parsed = _safe_urlparse(value if "://" in value else f"//{value}")
+    host = (parsed.hostname if parsed else None) or value.split("/")[0].split(":")[0]
     return host.strip("[]").lower()
 
 
@@ -1081,10 +1096,10 @@ def _host_port(value: str) -> tuple[str, int | None]:
     value = (value or "").strip().strip("`")
     if not value:
         return "", None
-    parsed = urlparse(value if "://" in value else f"//{value}")
-    host = parsed.hostname or _normalize_host(value)
+    parsed = _safe_urlparse(value if "://" in value else f"//{value}")
+    host = (parsed.hostname if parsed else None) or _normalize_host(value)
     try:
-        port = parsed.port
+        port = parsed.port if parsed else None
     except ValueError:
         port = None
     return (host or "").strip("[]").lower(), port
@@ -1111,7 +1126,9 @@ def _parse_task_meta(text: str) -> dict:
 
 
 def _target_default_port(target: str) -> int | None:
-    parsed = urlparse(target if "://" in target else f"//{target}")
+    parsed = _safe_urlparse(target if "://" in target else f"//{target}")
+    if parsed is None:
+        return None
     if parsed.port:
         return parsed.port
     if parsed.scheme == "https":
@@ -1244,10 +1261,11 @@ def _extract_request_rows(text: str) -> list[dict]:
         if not path:
             path = next((c for c in cells if c.startswith("/") or c.startswith("http://") or c.startswith("https://")), "")
         if path.startswith("http://") or path.startswith("https://"):
-            parsed = urlparse(path)
-            host = host or (parsed.hostname or "")
-            port = parsed.port
-            path = parsed.path or "/"
+            parsed = _safe_urlparse(path)
+            if parsed is not None:
+                host = host or (parsed.hostname or "")
+                port = parsed.port
+                path = parsed.path or "/"
         else:
             _, port = _host_port(host)
         if not host:

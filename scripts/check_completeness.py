@@ -434,7 +434,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    passed, messages = check_completeness(Path(args.task_dir), mode=args.mode)
+    # Top-level guard: the gate must NEVER crash to a traceback. A crash would
+    # leave exit code undefined / fall through to a "passed" interpretation in
+    # some wrappers, silently letting an unfinished task finish. Any unexpected
+    # error is treated as a hard FAIL with the traceback surfaced, so the agent
+    # sees the problem instead of the gate being silently bypassed.
+    try:
+        passed, messages = check_completeness(Path(args.task_dir), mode=args.mode)
+    except Exception as exc:  # pragma: no cover - defensive, by definition unexpected
+        import traceback
+        print("=== COMPLETENESS GATE FAILED ===", file=sys.stderr)
+        print(f"completeness check crashed (treated as FAIL): {exc}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        print("", file=sys.stderr)
+        print("The gate could not run. Treat the queue as NOT drained.", file=sys.stderr)
+        print("Fix the data/script error above and rerun before finishing.", file=sys.stderr)
+        return 1
 
     if args.quiet and passed:
         return 0
